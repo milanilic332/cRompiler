@@ -17,6 +17,7 @@ void yyerror(const std::string &msg);
 %%
 
 "function"              { return token_function; }
+"print"                 { return token_print; }
 "else"                  { return token_else; }
 "if"                    { return token_if; }
 "for"                   { return token_for; }
@@ -25,6 +26,8 @@ void yyerror(const std::string &msg);
 "<-"                    { return token_assign; }
 "="                     { return token_assign; }
 "<="                    { return token_leq; }
+"=="                    { return token_eq; }
+"!="                    { return token_neq; }
 [a-zA-Z]+               { yylval.s = new string(yytext); return token_id; }
 [1-9][0-9]*             { yylval.i = atoi(yytext); return token_int; }
 [0-9]+[.][0-9]+         { yylval.d = atof(yytext); return token_double; }

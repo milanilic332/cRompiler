@@ -20,23 +20,23 @@ void yyerror(const std::string &msg) {
 %union {
 	int i;
 	double d;
-	string* s;
-	ExpressionNode* e;
+	string *s;
+	ExpressionNode *e;
 	vector<ExpressionNode*> *ve;
 	vector<string> *vs;
-	FunctionPrototypeNode* p;
+	FunctionPrototypeNode *p;
 }
 
 %token token_int token_double token_id token_assign token_return token_function
-%token token_for token_in token_if token_else
+%token token_for token_in token_if token_else token_print
 %token token_eq token_leq token_geq token_not token_neq
 
 %type <i> token_int
 %type <d> token_double
 %type <s> token_id
-%type <e> EXPRESSION EXPRESSIONP STATEMENT STATEMENTSP
+%type <e> EXPRESSION EXPRESSIONP STATEMENT STATEMENTS
 %type <vs> LIST_PARAMS LIST_PARAMSP
-%type <ve> LIST_ARGS LIST_ARGSP STATEMENTS
+%type <ve> LIST_ARGS LIST_ARGSP STATEMENTSP
 
 
 %right token_assign
@@ -53,10 +53,11 @@ void yyerror(const std::string &msg) {
 STATEMENTS
     : STATEMENTSP {
 		$$ = new BlockNode(*$1);
+		$$->codegen();
 		delete $1;
 	}
     | {
-		$$ = new BlockNode(vector<ExpressionNode*>);
+		$$ = new BlockNode(vector<ExpressionNode*>());
 	}
     ;
 
@@ -66,7 +67,8 @@ STATEMENTSP
 		$$->push_back($2);
 	}
     | STATEMENT {
-		$$ = new vector<ExpressionNode*>($1);
+		$$ = new vector<ExpressionNode*>;
+		$$->push_back($1);
 	}
     ;
 
@@ -78,24 +80,32 @@ STATEMENT
     | token_id '[' EXPRESSION ']' token_assign EXPRESSION {
 
 	}
-    | token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTS '}' {
-		FunctionNode f(new PrototypeNode(*$1, *$5), $8);
+    | token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
+		FunctionNode f(FunctionPrototypeNode(*$1, *$5), new BlockNode(*$8));
 		delete $1;
 		delete $5;
+		delete $8;
 		f.codegen();
+		$$ = new EmptyNode();
 	}
-    | token_if '(' EXPRESSION ')' '{' STATEMENTS '}' {
+    /* | token_if '(' EXPRESSION ')' '{' STATEMENTS '}' {
 		$$ = new IfElseNode($3, $6);
+	} */
+    | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}' {
+		$$ = new IfElseNode($3, new BlockNode(*$6), new BlockNode(*$10));
+		delete $6;
+		delete $10;
 	}
-    | token_if '(' EXPRESSION ')' '{' STATEMENTS '}' token_else '{' STATEMENTS '}' {
-		$$ = new IfElseNode($3, $6, $10);
-	}
-    | token_for '(' token_id  token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTS '}' {
-		$$ = new ForLoopNode(*$3, $5, $7, $10);
+    | token_for '(' token_id  token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}' {
+		$$ = new ForLoopNode(*$3, $5, $7, new BlockNode(*$10));
 		delete $3;
+		delete $10;
 	}
 	| token_return '(' EXPRESSIONP ')' {
 		$$ = new ReturnNode($3);
+	}
+	| token_print '(' EXPRESSIONP ')' {
+		$$ = new PrintNode($3);
 	}
     ;
 
@@ -124,7 +134,8 @@ LIST_PARAMSP
 		delete $3;
 	}
     | token_id {
-		$$ = new vector<string>(*$1);
+		$$ = new vector<string>;
+		$$->push_back(*$1);
 		delete $1;
 	}
     ;
@@ -162,7 +173,8 @@ LIST_ARGSP
 		$$->push_back($3);
 	}
     | EXPRESSION {
-		$$ = new vector<ExpressionNode*>($1);
+		$$ = new vector<ExpressionNode*>;
+		$$->push_back($1);
 	}
     ;
 
@@ -177,7 +189,7 @@ EXPRESSION
 		$$ = new BinaryOperatorNode(bin_op::mul, $1, $3);
 	}
     | EXPRESSION '/' EXPRESSION {
-		$$ = new BinaryOperatorNode(bin_op::div, $1, $3);
+		$$ = new BinaryOperatorNode(bin_op::di, $1, $3);
 	}
     | EXPRESSION '>' EXPRESSION {
 		$$ = new BinaryOperatorNode(bin_op::gt, $1, $3);
@@ -204,7 +216,7 @@ EXPRESSION
 		$$ = $2;
 	}
     | token_id {
-		$$ = VariableNode(*$1);
+		$$ = new VariableNode(*$1);
 		delete $1;
 	}
     | token_id '[' EXPRESSION ']' {
@@ -219,14 +231,40 @@ EXPRESSION
 		$$ = new ConstantNode($1);
 	}
     | token_double {
-
 	}
     ;
 
 %%
 
-int main(void){
-    /* FUNKCIJE ZA MAT, PRINT */
-    yyparse();
-    return 0;
+extern llvm::Module* TheModule;
+extern llvm::LLVMContext TheContext;
+extern IRBuilder<> Builder;
+Function *MainFja;
+Function *PrintfFja;
+Value* Str;
+
+int main() {
+	InitializeModuleAndPassManager();
+
+	FunctionType *FT1 = FunctionType::get(IntegerType::getInt32Ty(TheContext), PointerType::get(Type::getInt8Ty(TheContext), 0), true);
+	PrintfFja = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
+
+	vector<Type*> v(0);
+	FunctionType* FT2 = FunctionType::get(Type::getInt32Ty(TheContext), v, false);
+	MainFja = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
+	BasicBlock *BB = BasicBlock::Create(TheContext, "entry", MainFja);
+	Builder.SetInsertPoint(BB);
+
+	Str = Builder.CreateGlobalStringPtr("%d\n");
+
+	yyparse();
+
+	Builder.CreateRet(ConstantInt::get(TheContext, APInt(32, 0)));
+    verifyFunction(*MainFja);
+
+	TheModule->print(llvm::outs(), nullptr);
+
+	delete TheModule;
+
+	return 0;
 }

@@ -6,12 +6,27 @@
 #include <unordered_map>
 using namespace std;
 
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/TargetRegistry.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/TargetSelect.h"
+
+using namespace llvm;
+using namespace llvm::legacy;
+
 
 enum class bin_op {
 	plus,
 	minus,
 	mul,
-	div,
+	di,
 	gt,
 	lt,
 	geq,
@@ -30,18 +45,18 @@ public:
 
 class VariableNode: public ExpressionNode {
 public:
-	VariableNode(const string &id)
+	VariableNode(string id)
 		: id_(id)
 	{}
     Value* codegen() const;
 private:
-	std::string id_;
+	string id_;
 };
 
 
 class ConstantNode: public ExpressionNode {
 public:
-    ConstantNode(const int num)
+    ConstantNode(int num)
 		: num_(num)
 	{}
 	Value* codegen() const;
@@ -52,7 +67,7 @@ private:
 
 class AssignmentNode: public ExpressionNode {
 public:
-    AssignmentNode(const string &id, ExpressionNode* e)
+    AssignmentNode(string id, ExpressionNode* e)
         : id_(id), e_(e)
     {}
 	Value* codegen() const;
@@ -91,19 +106,37 @@ public:
 	BlockNode(vector<ExpressionNode*> statements)
 		: statements_(statements)
 	{}
-	~BlockNode();
+	// ~BlockNode();
 	Value* codegen() const;
 private:
 	vector<ExpressionNode*> statements_;
 };
 
 
+class PrintNode: public ExpressionNode {
+public:
+	PrintNode(ExpressionNode* e)
+		: e_(e)
+	{}
+	Value* codegen() const;
+private:
+	ExpressionNode *e_;
+};
+
+
+class EmptyNode: public ExpressionNode {
+public:
+	EmptyNode() {}
+	Value* codegen() const;
+};
+
+
 class FunctionCallNode: public ExpressionNode {
 public:
-	FunctionCallNode(const string &id, const vector<ExpressionNode*> &params)
+	FunctionCallNode(string id, vector<ExpressionNode*> params)
 		: id_(id), params_(params)
 	{}
-	~FunctionCallNode();
+	// ~FunctionCallNode();
 	Value* codegen() const;
 private:
 	string id_;
@@ -116,7 +149,7 @@ public:
    IfElseNode(ExpressionNode* cond, ExpressionNode* then, ExpressionNode* els)
        : cond_(cond), then_(then), else_(els)
    {}
-   ~IfElseNode();
+   // ~IfElseNode();
    Value* codegen() const;
 private:
    ExpressionNode *cond_;
@@ -130,7 +163,7 @@ public:
 	ForLoopNode(string id, ExpressionNode* start, ExpressionNode* end, ExpressionNode* body)
 		: id_(id), start_(start), end_(end), body_(body)
 	{}
-	~ForLoopNode();
+	// ~ForLoopNode();
 	Value* codegen() const;
 private:
 	string id_;
@@ -142,10 +175,13 @@ private:
 
 class FunctionPrototypeNode {
 public:
-    FunctionPrototypeNode(const std::string &id, const vector<string> &params)
+    FunctionPrototypeNode(string id, vector<string> params)
         : id_(id), params_(params)
     {}
-	Value* codegen() const;
+	Function* codegen() const;
+	string getName() const {
+    return id_;
+  	}
 private:
     string id_;
     vector<string> params_;
@@ -154,12 +190,15 @@ private:
 
 class FunctionNode {
 public:
-	FunctionNode(const FunctionPrototypeNode &prototype, ExpressionNode* body)
+	FunctionNode(FunctionPrototypeNode prototype, ExpressionNode* body)
 		: prototype_(prototype), body_(body)
 	{}
-	~FunctionNode();
-	Value* codegen() const;
+	// ~FunctionNode();
+	Function* codegen() const;
 private:
 	FunctionPrototypeNode prototype_;
 	ExpressionNode* body_;
 };
+
+void InitializeModuleAndPassManager();
+AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, const string &VarName);
