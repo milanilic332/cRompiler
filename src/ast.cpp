@@ -4,7 +4,7 @@
 LLVMContext TheContext;
 Module* TheModule;
 IRBuilder<> Builder(TheContext);
-map<string,  AllocaInst*> NamedValues;
+map<Function*, map<string,  AllocaInst*>> NamedValues;
 llvm::legacy::FunctionPassManager *TheFPM;
 extern Function *MainFja;
 extern Function *PrintfFja;
@@ -12,7 +12,9 @@ extern Value* Str;
 
 Value* VariableNode::codegen() const {
     cerr << "Entered VariableNode" << endl;
-    AllocaInst *Alloca = NamedValues[id_];
+    Function *F = Builder.GetInsertBlock()->getParent();
+
+    AllocaInst *Alloca = NamedValues[F][id_];
     if (!Alloca) {
         cerr << "Variable doesn't exist: " << id_ << endl;
         exit(1);
@@ -28,14 +30,14 @@ Value* ConstantNode::codegen() const {
 Value* AssignmentNode::codegen() const {
     cerr << "Entered AssignmentNode" << endl;
     Value *Val = e_->codegen();
-    vector<AllocaInst*> OldValues;
-    Function *F = Builder.GetInsertBlock()->getParent();
     if (!Val)
         return nullptr;
+    Function *F = Builder.GetInsertBlock()->getParent();
+
     AllocaInst* Alloca = CreateEntryBlockAlloca(F, id_);
     Builder.CreateStore(Val, Alloca);
-    OldValues.push_back(NamedValues[id_]);
-    NamedValues[id_] = Alloca;
+
+    NamedValues[F][id_] = Alloca;
     return Val;
 }
 
@@ -180,8 +182,8 @@ Value* ForLoopNode::codegen() const {
     Builder.CreateBr(LoopBB);
 
     Builder.SetInsertPoint(LoopBB);
-    AllocaInst* OldVal = NamedValues[id_];
-    NamedValues[id_] = Alloca;
+    AllocaInst* OldVal = NamedValues[F][id_];
+    NamedValues[F][id_] = Alloca;
 
     Value* BodyVal = body_->codegen();
     if (!BodyVal)
@@ -208,9 +210,9 @@ Value* ForLoopNode::codegen() const {
     LoopBB = Builder.GetInsertBlock();
 
     if (OldVal != nullptr)
-      NamedValues[id_] = OldVal;
+      NamedValues[F][id_] = OldVal;
     else
-      NamedValues.erase(id_);
+      NamedValues[F].erase(id_);
     return ConstantInt::get(TheContext, APInt(32, 0));
 }
 
@@ -247,10 +249,12 @@ Function* FunctionNode::codegen() const {
     BasicBlock *BB = BasicBlock::Create(TheContext, "entry", F);
     Builder.SetInsertPoint(BB);
 
-    NamedValues.clear();
+    Str = Builder.CreateGlobalStringPtr("%d\n");
+
+    NamedValues[F].clear();
     for(auto &Arg : F->args()) {
         AllocaInst* Alloca = CreateEntryBlockAlloca(F, Arg.getName());
-        NamedValues[Arg.getName()] = Alloca;
+        NamedValues[F][Arg.getName()] = Alloca;
         Builder.CreateStore(&Arg, Alloca);
     }
 

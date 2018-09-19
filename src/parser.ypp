@@ -15,6 +15,14 @@ void yyerror(const std::string &msg) {
 	exit(1);
 }
 
+extern llvm::Module* TheModule;
+extern llvm::LLVMContext TheContext;
+extern IRBuilder<> Builder;
+Function *MainFja;
+Function *PrintfFja;
+Value* Str;
+
+
 %}
 
 %union {
@@ -28,13 +36,13 @@ void yyerror(const std::string &msg) {
 }
 
 %token token_int token_double token_id token_assign token_return token_function
-%token token_for token_in token_if token_else token_print
+%token token_for token_in token_if token_else token_print token_main
 %token token_eq token_leq token_geq token_not token_neq
 
 %type <i> token_int
 %type <d> token_double
 %type <s> token_id
-%type <e> EXPRESSION EXPRESSIONP STATEMENT STATEMENTS
+%type <e> EXPRESSION EXPRESSIONP STATEMENT
 %type <vs> LIST_PARAMS LIST_PARAMSP
 %type <ve> LIST_ARGS LIST_ARGSP STATEMENTSP
 
@@ -49,17 +57,6 @@ void yyerror(const std::string &msg) {
 %left '*' '/'
 
 %%
-
-STATEMENTS
-    : STATEMENTSP {
-		$$ = new BlockNode(*$1);
-		$$->codegen();
-		delete $1;
-	}
-    | {
-		$$ = new BlockNode(vector<ExpressionNode*>());
-	}
-    ;
 
 STATEMENTSP
     : STATEMENTSP STATEMENT {
@@ -88,9 +85,25 @@ STATEMENT
 		f.codegen();
 		$$ = new EmptyNode();
 	}
-    /* | token_if '(' EXPRESSION ')' '{' STATEMENTS '}' {
-		$$ = new IfElseNode($3, $6);
-	} */
+	| token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
+		vector<Type*> v(0);
+	    FunctionType* FT2 = FunctionType::get(Type::getInt32Ty(TheContext), v, false);
+	    MainFja = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
+	    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", MainFja);
+	    Builder.SetInsertPoint(BB);
+
+		Str = Builder.CreateGlobalStringPtr("%d\n");
+
+		$$ = new BlockNode(*$8);
+		$$->codegen();
+		delete $8;
+
+		Builder.CreateRet(ConstantInt::get(TheContext, APInt(32, 0)));
+	    verifyFunction(*MainFja);
+	}
+    | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' {
+		$$ = new IfElseNode($3, new BlockNode(*$6), new EmptyNode());
+	}
     | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}' {
 		$$ = new IfElseNode($3, new BlockNode(*$6), new BlockNode(*$10));
 		delete $6;
@@ -236,34 +249,19 @@ EXPRESSION
 
 %%
 
-extern llvm::Module* TheModule;
-extern llvm::LLVMContext TheContext;
-extern IRBuilder<> Builder;
-Function *MainFja;
-Function *PrintfFja;
-Value* Str;
 
 int main() {
 	InitializeModuleAndPassManager();
-
+	cerr << "1" << endl;
 	FunctionType *FT1 = FunctionType::get(IntegerType::getInt32Ty(TheContext), PointerType::get(Type::getInt8Ty(TheContext), 0), true);
 	PrintfFja = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
-
-	vector<Type*> v(0);
-	FunctionType* FT2 = FunctionType::get(Type::getInt32Ty(TheContext), v, false);
-	MainFja = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
-	BasicBlock *BB = BasicBlock::Create(TheContext, "entry", MainFja);
-	Builder.SetInsertPoint(BB);
-
-	Str = Builder.CreateGlobalStringPtr("%d\n");
-
+	cerr << "2" << endl;
+	//Str = Builder.CreateGlobalStringPtr("%d\n");
+	cerr << "3" << endl;
 	yyparse();
-
-	Builder.CreateRet(ConstantInt::get(TheContext, APInt(32, 0)));
-    verifyFunction(*MainFja);
-
+	cerr << "4" << endl;
 	TheModule->print(llvm::outs(), nullptr);
-
+	cerr << "5" << endl;
 	delete TheModule;
 
 	return 0;

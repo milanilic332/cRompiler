@@ -16,6 +16,7 @@ void yyerror(const std::string &msg);
 
 %%
 
+"main"                  { return token_main; }
 "function"              { return token_function; }
 "print"                 { return token_print; }
 "else"                  { return token_else; }
