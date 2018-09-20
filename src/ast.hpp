@@ -54,14 +54,24 @@ private:
 };
 
 
-class ConstantNode: public ExpressionNode {
+class IntNode: public ExpressionNode {
 public:
-    ConstantNode(int num)
+    IntNode(int num)
 		: num_(num)
 	{}
 	Value* codegen() const;
 private:
 	int num_;
+};
+
+class DoubleNode: public ExpressionNode {
+public:
+    DoubleNode(float num)
+		: num_(num)
+	{}
+	Value* codegen() const;
+private:
+ 	double num_;
 };
 
 
@@ -87,6 +97,17 @@ private:
     bin_op op_;
     ExpressionNode* l_;
     ExpressionNode* r_;
+};
+
+
+class ArrayNode: public ExpressionNode {
+public:
+	ArrayNode(vector<ExpressionNode*> e)
+		: e_(e)
+	{}
+	Value* codegen() const;
+private:
+	vector<ExpressionNode*> e_;
 };
 
 
@@ -201,4 +222,5 @@ private:
 };
 
 void InitializeModuleAndPassManager();
-AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, const string &VarName);
+AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarName);
+AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName);

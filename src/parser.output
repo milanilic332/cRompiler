@@ -1,0 +1,1563 @@
+Grammar
+
+    0 $accept: STATEMENTSP $end
+
+    1 STATEMENTSP: STATEMENTSP STATEMENT
+    2            | STATEMENT
+
+    3 STATEMENT: token_id token_assign EXPRESSION
+    4          | token_id '[' EXPRESSION ']' token_assign EXPRESSION
+    5          | token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+    6          | token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+    7          | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}'
+    8          | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+    9          | token_for '(' token_id token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}'
+   10          | token_return '(' EXPRESSIONP ')'
+   11          | token_print '(' EXPRESSIONP ')'
+
+   12 EXPRESSIONP: EXPRESSION
+   13            | %empty
+
+   14 LIST_PARAMS: LIST_PARAMSP
+   15            | %empty
+
+   16 LIST_PARAMSP: LIST_PARAMSP ',' token_id
+   17             | token_id
+
+   18 LIST_ARGS: LIST_ARGSP
+   19          | %empty
+
+   20 LIST_ARGSP: LIST_ARGSP ',' EXPRESSION
+   21           | EXPRESSION
+
+   22 EXPRESSION: EXPRESSION '+' EXPRESSION
+   23           | EXPRESSION '-' EXPRESSION
+   24           | EXPRESSION '*' EXPRESSION
+   25           | EXPRESSION '/' EXPRESSION
+   26           | EXPRESSION '>' EXPRESSION
+   27           | EXPRESSION '<' EXPRESSION
+   28           | EXPRESSION token_eq EXPRESSION
+   29           | EXPRESSION token_leq EXPRESSION
+   30           | EXPRESSION token_geq EXPRESSION
+   31           | EXPRESSION token_neq EXPRESSION
+   32           | token_not EXPRESSION
+   33           | '(' EXPRESSION ')'
+   34           | token_id
+   35           | token_id '[' EXPRESSION ']'
+   36           | token_id '(' LIST_ARGS ')'
+   37           | token_int
+   38           | token_double
+   39           | token_array '(' LIST_ARGS ')'
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'(' (40) 5 6 7 8 9 10 11 33 36 39
+')' (41) 5 6 7 8 9 10 11 33 36 39
+'*' (42) 24
+'+' (43) 22
+',' (44) 16 20
+'-' (45) 23
+'/' (47) 25
+':' (58) 9
+'<' (60) 27
+'>' (62) 26
+'[' (91) 4 35
+']' (93) 4 35
+'{' (123) 5 6 7 8 9
+'}' (125) 5 6 7 8 9
+error (256)
+token_int (258) 37
+token_double (259) 38
+token_id (260) 3 4 5 9 16 17 34 35 36
+token_assign (261) 3 4 5 6
+token_return (262) 10
+token_function (263) 5 6
+token_for (264) 9
+token_in (265) 9
+token_if (266) 7 8
+token_else (267) 8
+token_print (268) 11
+token_main (269) 6
+token_array (270) 39
+token_eq (271) 28
+token_leq (272) 29
+token_geq (273) 30
+token_not (274) 32
+token_neq (275) 31
+
+
+Nonterminals, with rules where they appear
+
+$accept (35)
+    on left: 0
+STATEMENTSP (36)
+    on left: 1 2, on right: 0 1 5 6 7 8 9
+STATEMENT (37)
+    on left: 3 4 5 6 7 8 9 10 11, on right: 1 2
+EXPRESSIONP (38)
+    on left: 12 13, on right: 10 11
+LIST_PARAMS (39)
+    on left: 14 15, on right: 5 6
+LIST_PARAMSP (40)
+    on left: 16 17, on right: 14 16
+LIST_ARGS (41)
+    on left: 18 19, on right: 36 39
+LIST_ARGSP (42)
+    on left: 20 21, on right: 18 20
+EXPRESSION (43)
+    on left: 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39,
+    on right: 3 4 7 8 9 12 20 21 22 23 24 25 26 27 28 29 30 31 32 33
+    35
+
+
+State 0
+
+    0 $accept: . STATEMENTSP $end
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 7
+    STATEMENT    go to state 8
+
+
+State 1
+
+    3 STATEMENT: token_id . token_assign EXPRESSION
+    4          | token_id . '[' EXPRESSION ']' token_assign EXPRESSION
+    5          | token_id . token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_assign  shift, and go to state 9
+    '['           shift, and go to state 10
+
+
+State 2
+
+   10 STATEMENT: token_return . '(' EXPRESSIONP ')'
+
+    '('  shift, and go to state 11
+
+
+State 3
+
+    9 STATEMENT: token_for . '(' token_id token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}'
+
+    '('  shift, and go to state 12
+
+
+State 4
+
+    7 STATEMENT: token_if . '(' EXPRESSION ')' '{' STATEMENTSP '}'
+    8          | token_if . '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+
+    '('  shift, and go to state 13
+
+
+State 5
+
+   11 STATEMENT: token_print . '(' EXPRESSIONP ')'
+
+    '('  shift, and go to state 14
+
+
+State 6
+
+    6 STATEMENT: token_main . token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_assign  shift, and go to state 15
+
+
+State 7
+
+    0 $accept: STATEMENTSP . $end
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+
+    $end          shift, and go to state 16
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENT  go to state 17
+
+
+State 8
+
+    2 STATEMENTSP: STATEMENT .
+
+    $default  reduce using rule 2 (STATEMENTSP)
+
+
+State 9
+
+    3 STATEMENT: token_id token_assign . EXPRESSION
+    5          | token_id token_assign . token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_int       shift, and go to state 18
+    token_double    shift, and go to state 19
+    token_id        shift, and go to state 20
+    token_function  shift, and go to state 21
+    token_array     shift, and go to state 22
+    token_not       shift, and go to state 23
+    '('             shift, and go to state 24
+
+    EXPRESSION  go to state 25
+
+
+State 10
+
+    4 STATEMENT: token_id '[' . EXPRESSION ']' token_assign EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 26
+
+
+State 11
+
+   10 STATEMENT: token_return '(' . EXPRESSIONP ')'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    $default  reduce using rule 13 (EXPRESSIONP)
+
+    EXPRESSIONP  go to state 27
+    EXPRESSION   go to state 28
+
+
+State 12
+
+    9 STATEMENT: token_for '(' . token_id token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}'
+
+    token_id  shift, and go to state 29
+
+
+State 13
+
+    7 STATEMENT: token_if '(' . EXPRESSION ')' '{' STATEMENTSP '}'
+    8          | token_if '(' . EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 30
+
+
+State 14
+
+   11 STATEMENT: token_print '(' . EXPRESSIONP ')'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    $default  reduce using rule 13 (EXPRESSIONP)
+
+    EXPRESSIONP  go to state 31
+    EXPRESSION   go to state 28
+
+
+State 15
+
+    6 STATEMENT: token_main token_assign . token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_function  shift, and go to state 32
+
+
+State 16
+
+    0 $accept: STATEMENTSP $end .
+
+    $default  accept
+
+
+State 17
+
+    1 STATEMENTSP: STATEMENTSP STATEMENT .
+
+    $default  reduce using rule 1 (STATEMENTSP)
+
+
+State 18
+
+   37 EXPRESSION: token_int .
+
+    $default  reduce using rule 37 (EXPRESSION)
+
+
+State 19
+
+   38 EXPRESSION: token_double .
+
+    $default  reduce using rule 38 (EXPRESSION)
+
+
+State 20
+
+   34 EXPRESSION: token_id .
+   35           | token_id . '[' EXPRESSION ']'
+   36           | token_id . '(' LIST_ARGS ')'
+
+    '['  shift, and go to state 33
+    '('  shift, and go to state 34
+
+    $default  reduce using rule 34 (EXPRESSION)
+
+
+State 21
+
+    5 STATEMENT: token_id token_assign token_function . '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    '('  shift, and go to state 35
+
+
+State 22
+
+   39 EXPRESSION: token_array . '(' LIST_ARGS ')'
+
+    '('  shift, and go to state 36
+
+
+State 23
+
+   32 EXPRESSION: token_not . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 37
+
+
+State 24
+
+   33 EXPRESSION: '(' . EXPRESSION ')'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 38
+
+
+State 25
+
+    3 STATEMENT: token_id token_assign EXPRESSION .
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 3 (STATEMENT)
+
+
+State 26
+
+    4 STATEMENT: token_id '[' EXPRESSION . ']' token_assign EXPRESSION
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+    ']'        shift, and go to state 49
+
+
+State 27
+
+   10 STATEMENT: token_return '(' EXPRESSIONP . ')'
+
+    ')'  shift, and go to state 50
+
+
+State 28
+
+   12 EXPRESSIONP: EXPRESSION .
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 12 (EXPRESSIONP)
+
+
+State 29
+
+    9 STATEMENT: token_for '(' token_id . token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}'
+
+    token_in  shift, and go to state 51
+
+
+State 30
+
+    7 STATEMENT: token_if '(' EXPRESSION . ')' '{' STATEMENTSP '}'
+    8          | token_if '(' EXPRESSION . ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+    ')'        shift, and go to state 52
+
+
+State 31
+
+   11 STATEMENT: token_print '(' EXPRESSIONP . ')'
+
+    ')'  shift, and go to state 53
+
+
+State 32
+
+    6 STATEMENT: token_main token_assign token_function . '(' LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    '('  shift, and go to state 54
+
+
+State 33
+
+   35 EXPRESSION: token_id '[' . EXPRESSION ']'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 55
+
+
+State 34
+
+   36 EXPRESSION: token_id '(' . LIST_ARGS ')'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    $default  reduce using rule 19 (LIST_ARGS)
+
+    LIST_ARGS   go to state 56
+    LIST_ARGSP  go to state 57
+    EXPRESSION  go to state 58
+
+
+State 35
+
+    5 STATEMENT: token_id token_assign token_function '(' . LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_id  shift, and go to state 59
+
+    $default  reduce using rule 15 (LIST_PARAMS)
+
+    LIST_PARAMS   go to state 60
+    LIST_PARAMSP  go to state 61
+
+
+State 36
+
+   39 EXPRESSION: token_array '(' . LIST_ARGS ')'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    $default  reduce using rule 19 (LIST_ARGS)
+
+    LIST_ARGS   go to state 62
+    LIST_ARGSP  go to state 57
+    EXPRESSION  go to state 58
+
+
+State 37
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+   32           | token_not EXPRESSION .
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 32 (EXPRESSION)
+
+
+State 38
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+   33           | '(' EXPRESSION . ')'
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+    ')'        shift, and go to state 63
+
+
+State 39
+
+   28 EXPRESSION: EXPRESSION token_eq . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 64
+
+
+State 40
+
+   29 EXPRESSION: EXPRESSION token_leq . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 65
+
+
+State 41
+
+   30 EXPRESSION: EXPRESSION token_geq . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 66
+
+
+State 42
+
+   31 EXPRESSION: EXPRESSION token_neq . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 67
+
+
+State 43
+
+   27 EXPRESSION: EXPRESSION '<' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 68
+
+
+State 44
+
+   26 EXPRESSION: EXPRESSION '>' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 69
+
+
+State 45
+
+   22 EXPRESSION: EXPRESSION '+' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 70
+
+
+State 46
+
+   23 EXPRESSION: EXPRESSION '-' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 71
+
+
+State 47
+
+   24 EXPRESSION: EXPRESSION '*' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 72
+
+
+State 48
+
+   25 EXPRESSION: EXPRESSION '/' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 73
+
+
+State 49
+
+    4 STATEMENT: token_id '[' EXPRESSION ']' . token_assign EXPRESSION
+
+    token_assign  shift, and go to state 74
+
+
+State 50
+
+   10 STATEMENT: token_return '(' EXPRESSIONP ')' .
+
+    $default  reduce using rule 10 (STATEMENT)
+
+
+State 51
+
+    9 STATEMENT: token_for '(' token_id token_in . EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 75
+
+
+State 52
+
+    7 STATEMENT: token_if '(' EXPRESSION ')' . '{' STATEMENTSP '}'
+    8          | token_if '(' EXPRESSION ')' . '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+
+    '{'  shift, and go to state 76
+
+
+State 53
+
+   11 STATEMENT: token_print '(' EXPRESSIONP ')' .
+
+    $default  reduce using rule 11 (STATEMENT)
+
+
+State 54
+
+    6 STATEMENT: token_main token_assign token_function '(' . LIST_PARAMS ')' '{' STATEMENTSP '}'
+
+    token_id  shift, and go to state 59
+
+    $default  reduce using rule 15 (LIST_PARAMS)
+
+    LIST_PARAMS   go to state 77
+    LIST_PARAMSP  go to state 61
+
+
+State 55
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+   35           | token_id '[' EXPRESSION . ']'
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+    ']'        shift, and go to state 78
+
+
+State 56
+
+   36 EXPRESSION: token_id '(' LIST_ARGS . ')'
+
+    ')'  shift, and go to state 79
+
+
+State 57
+
+   18 LIST_ARGS: LIST_ARGSP .
+   20 LIST_ARGSP: LIST_ARGSP . ',' EXPRESSION
+
+    ','  shift, and go to state 80
+
+    $default  reduce using rule 18 (LIST_ARGS)
+
+
+State 58
+
+   21 LIST_ARGSP: EXPRESSION .
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 21 (LIST_ARGSP)
+
+
+State 59
+
+   17 LIST_PARAMSP: token_id .
+
+    $default  reduce using rule 17 (LIST_PARAMSP)
+
+
+State 60
+
+    5 STATEMENT: token_id token_assign token_function '(' LIST_PARAMS . ')' '{' STATEMENTSP '}'
+
+    ')'  shift, and go to state 81
+
+
+State 61
+
+   14 LIST_PARAMS: LIST_PARAMSP .
+   16 LIST_PARAMSP: LIST_PARAMSP . ',' token_id
+
+    ','  shift, and go to state 82
+
+    $default  reduce using rule 14 (LIST_PARAMS)
+
+
+State 62
+
+   39 EXPRESSION: token_array '(' LIST_ARGS . ')'
+
+    ')'  shift, and go to state 83
+
+
+State 63
+
+   33 EXPRESSION: '(' EXPRESSION ')' .
+
+    $default  reduce using rule 33 (EXPRESSION)
+
+
+State 64
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   28           | EXPRESSION token_eq EXPRESSION .
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 28 (EXPRESSION)
+
+
+State 65
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   29           | EXPRESSION token_leq EXPRESSION .
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '+'  shift, and go to state 45
+    '-'  shift, and go to state 46
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 29 (EXPRESSION)
+
+
+State 66
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   30           | EXPRESSION token_geq EXPRESSION .
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '+'  shift, and go to state 45
+    '-'  shift, and go to state 46
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 30 (EXPRESSION)
+
+
+State 67
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+   31           | EXPRESSION token_neq EXPRESSION .
+
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 31 (EXPRESSION)
+
+
+State 68
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   27           | EXPRESSION '<' EXPRESSION .
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '+'  shift, and go to state 45
+    '-'  shift, and go to state 46
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 27 (EXPRESSION)
+
+
+State 69
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   26           | EXPRESSION '>' EXPRESSION .
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '+'  shift, and go to state 45
+    '-'  shift, and go to state 46
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 26 (EXPRESSION)
+
+
+State 70
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   22           | EXPRESSION '+' EXPRESSION .
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 22 (EXPRESSION)
+
+
+State 71
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   23           | EXPRESSION '-' EXPRESSION .
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    '*'  shift, and go to state 47
+    '/'  shift, and go to state 48
+
+    $default  reduce using rule 23 (EXPRESSION)
+
+
+State 72
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   24           | EXPRESSION '*' EXPRESSION .
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    $default  reduce using rule 24 (EXPRESSION)
+
+
+State 73
+
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   25           | EXPRESSION '/' EXPRESSION .
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    $default  reduce using rule 25 (EXPRESSION)
+
+
+State 74
+
+    4 STATEMENT: token_id '[' EXPRESSION ']' token_assign . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 84
+
+
+State 75
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION . ':' EXPRESSION ')' '{' STATEMENTSP '}'
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    ':'        shift, and go to state 85
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+
+State 76
+
+    7 STATEMENT: token_if '(' EXPRESSION ')' '{' . STATEMENTSP '}'
+    8          | token_if '(' EXPRESSION ')' '{' . STATEMENTSP '}' token_else '{' STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 86
+    STATEMENT    go to state 8
+
+
+State 77
+
+    6 STATEMENT: token_main token_assign token_function '(' LIST_PARAMS . ')' '{' STATEMENTSP '}'
+
+    ')'  shift, and go to state 87
+
+
+State 78
+
+   35 EXPRESSION: token_id '[' EXPRESSION ']' .
+
+    $default  reduce using rule 35 (EXPRESSION)
+
+
+State 79
+
+   36 EXPRESSION: token_id '(' LIST_ARGS ')' .
+
+    $default  reduce using rule 36 (EXPRESSION)
+
+
+State 80
+
+   20 LIST_ARGSP: LIST_ARGSP ',' . EXPRESSION
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 88
+
+
+State 81
+
+    5 STATEMENT: token_id token_assign token_function '(' LIST_PARAMS ')' . '{' STATEMENTSP '}'
+
+    '{'  shift, and go to state 89
+
+
+State 82
+
+   16 LIST_PARAMSP: LIST_PARAMSP ',' . token_id
+
+    token_id  shift, and go to state 90
+
+
+State 83
+
+   39 EXPRESSION: token_array '(' LIST_ARGS ')' .
+
+    $default  reduce using rule 39 (EXPRESSION)
+
+
+State 84
+
+    4 STATEMENT: token_id '[' EXPRESSION ']' token_assign EXPRESSION .
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 4 (STATEMENT)
+
+
+State 85
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' . EXPRESSION ')' '{' STATEMENTSP '}'
+
+    token_int     shift, and go to state 18
+    token_double  shift, and go to state 19
+    token_id      shift, and go to state 20
+    token_array   shift, and go to state 22
+    token_not     shift, and go to state 23
+    '('           shift, and go to state 24
+
+    EXPRESSION  go to state 91
+
+
+State 86
+
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+    7 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP . '}'
+    8          | token_if '(' EXPRESSION ')' '{' STATEMENTSP . '}' token_else '{' STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+    '}'           shift, and go to state 92
+
+    STATEMENT  go to state 17
+
+
+State 87
+
+    6 STATEMENT: token_main token_assign token_function '(' LIST_PARAMS ')' . '{' STATEMENTSP '}'
+
+    '{'  shift, and go to state 93
+
+
+State 88
+
+   20 LIST_ARGSP: LIST_ARGSP ',' EXPRESSION .
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+
+    $default  reduce using rule 20 (LIST_ARGSP)
+
+
+State 89
+
+    5 STATEMENT: token_id token_assign token_function '(' LIST_PARAMS ')' '{' . STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 94
+    STATEMENT    go to state 8
+
+
+State 90
+
+   16 LIST_PARAMSP: LIST_PARAMSP ',' token_id .
+
+    $default  reduce using rule 16 (LIST_PARAMSP)
+
+
+State 91
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' EXPRESSION . ')' '{' STATEMENTSP '}'
+   22 EXPRESSION: EXPRESSION . '+' EXPRESSION
+   23           | EXPRESSION . '-' EXPRESSION
+   24           | EXPRESSION . '*' EXPRESSION
+   25           | EXPRESSION . '/' EXPRESSION
+   26           | EXPRESSION . '>' EXPRESSION
+   27           | EXPRESSION . '<' EXPRESSION
+   28           | EXPRESSION . token_eq EXPRESSION
+   29           | EXPRESSION . token_leq EXPRESSION
+   30           | EXPRESSION . token_geq EXPRESSION
+   31           | EXPRESSION . token_neq EXPRESSION
+
+    token_eq   shift, and go to state 39
+    token_leq  shift, and go to state 40
+    token_geq  shift, and go to state 41
+    token_neq  shift, and go to state 42
+    '<'        shift, and go to state 43
+    '>'        shift, and go to state 44
+    '+'        shift, and go to state 45
+    '-'        shift, and go to state 46
+    '*'        shift, and go to state 47
+    '/'        shift, and go to state 48
+    ')'        shift, and go to state 95
+
+
+State 92
+
+    7 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' .
+    8          | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' . token_else '{' STATEMENTSP '}'
+
+    token_else  shift, and go to state 96
+
+    $default  reduce using rule 7 (STATEMENT)
+
+
+State 93
+
+    6 STATEMENT: token_main token_assign token_function '(' LIST_PARAMS ')' '{' . STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 97
+    STATEMENT    go to state 8
+
+
+State 94
+
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+    5 STATEMENT: token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP . '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+    '}'           shift, and go to state 98
+
+    STATEMENT  go to state 17
+
+
+State 95
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' EXPRESSION ')' . '{' STATEMENTSP '}'
+
+    '{'  shift, and go to state 99
+
+
+State 96
+
+    8 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else . '{' STATEMENTSP '}'
+
+    '{'  shift, and go to state 100
+
+
+State 97
+
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+    6 STATEMENT: token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP . '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+    '}'           shift, and go to state 101
+
+    STATEMENT  go to state 17
+
+
+State 98
+
+    5 STATEMENT: token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' .
+
+    $default  reduce using rule 5 (STATEMENT)
+
+
+State 99
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' EXPRESSION ')' '{' . STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 102
+    STATEMENT    go to state 8
+
+
+State 100
+
+    8 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' . STATEMENTSP '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+
+    STATEMENTSP  go to state 103
+    STATEMENT    go to state 8
+
+
+State 101
+
+    6 STATEMENT: token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' .
+
+    $default  reduce using rule 6 (STATEMENT)
+
+
+State 102
+
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP . '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+    '}'           shift, and go to state 104
+
+    STATEMENT  go to state 17
+
+
+State 103
+
+    1 STATEMENTSP: STATEMENTSP . STATEMENT
+    8 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP . '}'
+
+    token_id      shift, and go to state 1
+    token_return  shift, and go to state 2
+    token_for     shift, and go to state 3
+    token_if      shift, and go to state 4
+    token_print   shift, and go to state 5
+    token_main    shift, and go to state 6
+    '}'           shift, and go to state 105
+
+    STATEMENT  go to state 17
+
+
+State 104
+
+    9 STATEMENT: token_for '(' token_id token_in EXPRESSION ':' EXPRESSION ')' '{' STATEMENTSP '}' .
+
+    $default  reduce using rule 9 (STATEMENT)
+
+
+State 105
+
+    8 STATEMENT: token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' token_else '{' STATEMENTSP '}' .
+
+    $default  reduce using rule 8 (STATEMENT)

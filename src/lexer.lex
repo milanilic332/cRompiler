@@ -17,6 +17,7 @@ void yyerror(const std::string &msg);
 %%
 
 "main"                  { return token_main; }
+"array"                 { return token_array; }
 "function"              { return token_function; }
 "print"                 { return token_print; }
 "else"                  { return token_else; }
@@ -32,7 +33,7 @@ void yyerror(const std::string &msg);
 [a-zA-Z]+               { yylval.s = new string(yytext); return token_id; }
 [1-9][0-9]*             { yylval.i = atoi(yytext); return token_int; }
 [0-9]+[.][0-9]+         { yylval.d = atof(yytext); return token_double; }
-[:{}()\[\],/<>+*-]      { return *yytext; }
+[:{}()\[\],/<>+*-]     { return *yytext; }
 [ \t\n]                 { }
 [#].*                   { }
 .                       { cout << "Error" << endl; exit(1); }

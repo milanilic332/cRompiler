@@ -21,6 +21,7 @@ extern IRBuilder<> Builder;
 Function *MainFja;
 Function *PrintfFja;
 Value* Str;
+Value* Str1;
 
 
 %}
@@ -36,7 +37,7 @@ Value* Str;
 }
 
 %token token_int token_double token_id token_assign token_return token_function
-%token token_for token_in token_if token_else token_print token_main
+%token token_for token_in token_if token_else token_print token_main token_array
 %token token_eq token_leq token_geq token_not token_neq
 
 %type <i> token_int
@@ -93,7 +94,7 @@ STATEMENT
 	    Builder.SetInsertPoint(BB);
 
 		Str = Builder.CreateGlobalStringPtr("%d\n");
-
+		Str1 =  Builder.CreateGlobalStringPtr("%lf\n");
 		$$ = new BlockNode(*$8);
 		$$->codegen();
 		delete $8;
@@ -241,9 +242,14 @@ EXPRESSION
 		delete $3;
 	}
     | token_int {
-		$$ = new ConstantNode($1);
+		$$ = new IntNode($1);
 	}
     | token_double {
+		$$ = new DoubleNode($1);
+	}
+	| token_array '(' LIST_ARGS ')' {
+		$$ = new ArrayNode(*$3);
+		delete $3;
 	}
     ;
 

@@ -6,9 +6,9 @@ Module* TheModule;
 IRBuilder<> Builder(TheContext);
 map<Function*, map<string,  AllocaInst*>> NamedValues;
 llvm::legacy::FunctionPassManager *TheFPM;
-extern Function *MainFja;
 extern Function *PrintfFja;
 extern Value* Str;
+extern Value* Str1;
 
 Value* VariableNode::codegen() const {
     cerr << "Entered VariableNode" << endl;
@@ -22,9 +22,14 @@ Value* VariableNode::codegen() const {
     return Builder.CreateLoad(Alloca);
 }
 
-Value* ConstantNode::codegen() const {
-    cerr << "Entered ConstantNode" << endl;
+Value* IntNode::codegen() const {
+    cerr << "Entered IntNode" << endl;
     return ConstantInt::get(TheContext, APInt(32, num_));
+}
+
+Value* DoubleNode::codegen() const {
+    cerr << "Entered DoubleNode" << endl;
+    return ConstantFP::get(TheContext, APFloat(num_));
 }
 
 Value* AssignmentNode::codegen() const {
@@ -34,7 +39,12 @@ Value* AssignmentNode::codegen() const {
         return nullptr;
     Function *F = Builder.GetInsertBlock()->getParent();
 
-    AllocaInst* Alloca = CreateEntryBlockAlloca(F, id_);
+    AllocaInst* Alloca = nullptr;
+    if(Val->getType() == Type::getInt32Ty(TheContext))
+        Alloca = CreateEntryBlockAllocaInt(F, id_);
+    else
+        Alloca = CreateEntryBlockAllocaDouble(F, id_);
+
     Builder.CreateStore(Val, Alloca);
 
     NamedValues[F][id_] = Alloca;
@@ -47,34 +57,74 @@ Value* BinaryOperatorNode::codegen() const {
     Value *d = r_->codegen();
     if (!l || !d)
         return nullptr;
-    switch(op_){
-        case bin_op::plus:
-            return Builder.CreateAdd(l, d, "addtmp");
-        case bin_op::minus:
-            return Builder.CreateSub(l, d, "subtmp");
-        case bin_op::mul:
-            return Builder.CreateMul(l, d, "multmp");
-        case bin_op::di:
-            return Builder.CreateFDiv(l, d, "divtmp");
-        case bin_op::gt: {
-            return Builder.CreateICmpSGT(l, d, "gttmp");
-        }
-        case bin_op::lt: {
-            return Builder.CreateICmpSLT(l, d, "lttmp");
-        }
-        case bin_op::geq: {
-            return Builder.CreateICmpSGE(l, d, "geqtmp");
-        }
-        case bin_op::leq: {
-            return Builder.CreateICmpSLE(l, d, "leqtmp");
-        }
-        case bin_op::eq: {
-            return Builder.CreateICmpEQ(l, d, "eqtmp");
-        }
-        case bin_op::neq: {
-            return Builder.CreateICmpNE(l, d, "neqtmp");
+    if(l->getType() == d->getType() && d->getType() == Type::getInt32Ty(TheContext)){
+        switch(op_){
+            case bin_op::plus:
+                return Builder.CreateAdd(l, d, "addtmp");
+            case bin_op::minus:
+                return Builder.CreateSub(l, d, "subtmp");
+            case bin_op::mul:
+                return Builder.CreateMul(l, d, "multmp");
+            case bin_op::di:
+                return Builder.CreateFDiv(l, d, "divtmp");
+            case bin_op::gt: {
+                return Builder.CreateICmpSGT(l, d, "gttmp");
+            }
+            case bin_op::lt: {
+                return Builder.CreateICmpSLT(l, d, "lttmp");
+            }
+            case bin_op::geq: {
+                return Builder.CreateICmpSGE(l, d, "geqtmp");
+            }
+            case bin_op::leq: {
+                return Builder.CreateICmpSLE(l, d, "leqtmp");
+            }
+            case bin_op::eq: {
+                return Builder.CreateICmpEQ(l, d, "eqtmp");
+            }
+            case bin_op::neq: {
+                return Builder.CreateICmpNE(l, d, "neqtmp");
+            }
         }
     }
+    else {
+        if(l->getType() == Type::getInt32Ty(TheContext))
+            l = Builder.CreateSIToFP(l, Type::getDoubleTy(TheContext));
+        if(d->getType() == Type::getInt32Ty(TheContext))
+            d = Builder.CreateSIToFP(d, Type::getDoubleTy(TheContext));
+        switch(op_){
+            case bin_op::plus:
+                return Builder.CreateFAdd(l, d, "addtmp");
+            case bin_op::minus:
+                return Builder.CreateFSub(l, d, "subtmp");
+            case bin_op::mul:
+                return Builder.CreateFMul(l, d, "multmp");
+            case bin_op::di:
+                return Builder.CreateFDiv(l, d, "divtmp");
+            case bin_op::gt: {
+                return Builder.CreateFCmpUGT(l, d, "gttmp");
+            }
+            case bin_op::lt: {
+                return Builder.CreateFCmpULT(l, d, "lttmp");
+            }
+            case bin_op::geq: {
+                return Builder.CreateFCmpUGE(l, d, "geqtmp");
+            }
+            case bin_op::leq: {
+                return Builder.CreateFCmpULE(l, d, "leqtmp");
+            }
+            case bin_op::eq: {
+                return Builder.CreateFCmpUEQ(l, d, "eqtmp");
+            }
+            case bin_op::neq: {
+                return Builder.CreateFCmpUNE(l, d, "neqtmp");
+            }
+        }
+    }
+}
+
+Value* ArrayNode::codegen() const {
+    return nullptr;
 }
 
 Value* ReturnNode::codegen() const {
@@ -99,7 +149,10 @@ Value* PrintNode::codegen() const {
         return nullptr;
 
     vector<Value*> ArgsV;
-    ArgsV.push_back(Str);
+    if(e->getType() == Type::getInt32Ty(TheContext))
+        ArgsV.push_back(Str);
+    else
+        ArgsV.push_back(Str1);
     ArgsV.push_back(e);
     Builder.CreateCall(PrintfFja, ArgsV, "printfCall");
 
@@ -133,7 +186,9 @@ Value* IfElseNode::codegen() const {
     cerr << "Entered IfElseNode" << endl;
     Value *Cond = cond_->codegen();
     if (!Cond)
-      return nullptr;
+        return nullptr;
+    if(Cond->getType() == Type::getInt32Ty(TheContext))
+        Cond = Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext));
     Value* Tmp = Builder.CreateFCmpONE(Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext)), ConstantFP::get(TheContext, APFloat(0.0)), "ifcond");
 
     Function *F = Builder.GetInsertBlock()->getParent();
@@ -160,7 +215,7 @@ Value* IfElseNode::codegen() const {
 
     F->getBasicBlockList().push_back(MergeBB);
     Builder.SetInsertPoint(MergeBB);
-    PHINode* PHI = Builder.CreatePHI(Type::getInt32Ty(TheContext), 2, "iftmp");
+    PHINode* PHI = Builder.CreatePHI(Type::getFloatTy(TheContext), 2, "iftmp");
     PHI->addIncoming(Then, ThenBB);
     PHI->addIncoming(Else, ElseBB);
 
@@ -177,7 +232,7 @@ Value* ForLoopNode::codegen() const {
     Function *F = Builder.GetInsertBlock()->getParent();
     BasicBlock *LoopBB = BasicBlock::Create(TheContext, "loop", F);
 
-    AllocaInst* Alloca = CreateEntryBlockAlloca(F, id_);
+    AllocaInst* Alloca = CreateEntryBlockAllocaInt(F, id_);
     Builder.CreateStore(StartVal, Alloca);
     Builder.CreateBr(LoopBB);
 
@@ -250,10 +305,11 @@ Function* FunctionNode::codegen() const {
     Builder.SetInsertPoint(BB);
 
     Str = Builder.CreateGlobalStringPtr("%d\n");
+    Str = Builder.CreateGlobalStringPtr("%lf\n");
 
     NamedValues[F].clear();
     for(auto &Arg : F->args()) {
-        AllocaInst* Alloca = CreateEntryBlockAlloca(F, Arg.getName());
+        AllocaInst* Alloca = CreateEntryBlockAllocaDouble(F, Arg.getName());
         NamedValues[F][Arg.getName()] = Alloca;
         Builder.CreateStore(&Arg, Alloca);
     }
@@ -283,7 +339,12 @@ void InitializeModuleAndPassManager() {
     TheFPM->doInitialization();
 }
 
-AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, const string &VarName) {
+AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarName) {
     IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     return TmpB.CreateAlloca(Type::getInt32Ty(TheContext), 0, VarName.c_str());
+}
+
+AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName) {
+    IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0, VarName.c_str());
 }
