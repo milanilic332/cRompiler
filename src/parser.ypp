@@ -18,6 +18,7 @@ void yyerror(const std::string &msg) {
 extern llvm::Module* TheModule;
 extern llvm::LLVMContext TheContext;
 extern IRBuilder<> Builder;
+extern vector<FunctionNode*> DefinedFunctions;
 Function *MainFja;
 Function *PrintfFja;
 Value* Str;
@@ -32,26 +33,31 @@ Value* Str1;
 	string *s;
 	ExpressionNode *e;
 	vector<ExpressionNode*> *ve;
-	vector<string> *vs;
+	vector<pair<my_type, string>> *vts;
 	FunctionPrototypeNode *p;
+	my_type mt;
 }
 
 %token token_int token_double token_id token_assign token_return token_function
 %token token_for token_in token_if token_else token_print token_main token_array
 %token token_eq token_leq token_geq token_not token_neq
+%token token_or token_and
+%token token_int_name token_double_name
 
 %type <i> token_int
 %type <d> token_double
 %type <s> token_id
 %type <e> EXPRESSION EXPRESSIONP STATEMENT
-%type <vs> LIST_PARAMS LIST_PARAMSP
+%type <vts> LIST_PARAMS LIST_PARAMSP
 %type <ve> LIST_ARGS LIST_ARGSP STATEMENTSP
+%type <mt> INTORDOUBLE
 
 
 %right token_assign
 %right token_not
 
 %left ':'
+%left token_or token_and
 %left token_eq token_neq
 %left '<' '>' token_leq token_geq
 %left '+' '-'
@@ -78,15 +84,15 @@ STATEMENT
     | token_id '[' EXPRESSION ']' token_assign EXPRESSION {
 
 	}
-    | token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
-		FunctionNode f(FunctionPrototypeNode(*$1, *$5), new BlockNode(*$8));
-		delete $1;
-		delete $5;
-		delete $8;
+    | INTORDOUBLE token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
+		FunctionNode f(FunctionPrototypeNode(*$2, *$6), new BlockNode(*$9));
+		delete $2;
+		delete $6;
+		delete $9;
 		f.codegen();
 		$$ = new EmptyNode();
 	}
-	| token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
+	| token_int_name token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
 		vector<Type*> v(0);
 	    FunctionType* FT2 = FunctionType::get(Type::getInt32Ty(TheContext), v, false);
 	    MainFja = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
@@ -95,9 +101,9 @@ STATEMENT
 
 		Str = Builder.CreateGlobalStringPtr("%d\n");
 		Str1 =  Builder.CreateGlobalStringPtr("%lf\n");
-		$$ = new BlockNode(*$8);
+		$$ = new BlockNode(*$9);
 		$$->codegen();
-		delete $8;
+		delete $9;
 
 		Builder.CreateRet(ConstantInt::get(TheContext, APInt(32, 0)));
 	    verifyFunction(*MainFja);
@@ -137,22 +143,37 @@ LIST_PARAMS
 		$$ = $1;
 	}
     | {
-		$$ = new vector<string>;
+		$$ = new vector<pair<my_type, string>>;
 	}
     ;
 
 LIST_PARAMSP
-    : LIST_PARAMSP ',' token_id {
+    : LIST_PARAMSP ',' INTORDOUBLE token_id {
 		$$ = $1;
-		$$->push_back(*$3);
-		delete $3;
+		pair<my_type, string> d;
+		d.first = $3;
+		d.second = *$4;
+		$$->push_back(d);
+		delete $4;
 	}
-    | token_id {
-		$$ = new vector<string>;
-		$$->push_back(*$1);
-		delete $1;
+    | INTORDOUBLE token_id {
+		pair<my_type, string> d;
+		d.first = $1;
+		d.second = *$2;
+		$$ = new vector<pair<my_type, string>>;
+		$$->push_back(d);
+		delete $2;
 	}
     ;
+
+INTORDOUBLE
+	: token_int_name {
+		$$ = my_type::int_;
+	}
+	| token_double_name {
+		$$ = my_type::double_;
+	}
+	;
 
 /* LIST_DEC_ARGS_OR_ARGS
     : LIST_ARGS {
@@ -223,6 +244,12 @@ EXPRESSION
     | EXPRESSION token_neq EXPRESSION {
 		$$ = new BinaryOperatorNode(bin_op::neq, $1, $3);
 	}
+	| EXPRESSION token_or EXPRESSION {
+		$$ = new BinaryOperatorNode(bin_op::or_, $1, $3);
+	}
+	| EXPRESSION token_and EXPRESSION {
+		$$ = new BinaryOperatorNode(bin_op::and_, $1, $3);
+	}
     | token_not EXPRESSION {
 
 	}
@@ -258,16 +285,16 @@ EXPRESSION
 
 int main() {
 	InitializeModuleAndPassManager();
-	cerr << "1" << endl;
+
 	FunctionType *FT1 = FunctionType::get(IntegerType::getInt32Ty(TheContext), PointerType::get(Type::getInt8Ty(TheContext), 0), true);
 	PrintfFja = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
-	cerr << "2" << endl;
+
 	//Str = Builder.CreateGlobalStringPtr("%d\n");
-	cerr << "3" << endl;
+
 	yyparse();
-	cerr << "4" << endl;
+
 	TheModule->print(llvm::outs(), nullptr);
-	cerr << "5" << endl;
+
 	delete TheModule;
 
 	return 0;

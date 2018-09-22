@@ -32,7 +32,15 @@ enum class bin_op {
 	geq,
 	leq,
 	eq,
-	neq
+	neq,
+	or_,
+	and_
+};
+
+
+enum class my_type {
+	int_,
+	double_
 };
 
 
@@ -196,7 +204,7 @@ private:
 
 class FunctionPrototypeNode {
 public:
-    FunctionPrototypeNode(string id, vector<string> params)
+    FunctionPrototypeNode(string id, vector<pair<my_type, string>> params)
         : id_(id), params_(params)
     {}
 	Function* codegen() const;
@@ -205,7 +213,7 @@ public:
   	}
 private:
     string id_;
-    vector<string> params_;
+    vector<pair<my_type, string>> params_;
 };
 
 

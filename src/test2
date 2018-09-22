@@ -1,0 +1,8 @@
+int abc <- function(double a, int b) {
+    print(a)
+    print(b)
+}
+
+int main <- function() {
+    a = abc(1.1, 2)
+}

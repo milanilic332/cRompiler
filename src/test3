@@ -1,0 +1,12 @@
+int fac <- function(int n) {
+    if(n == 0) {
+        return(1)
+    }
+    else {
+        return(1 + fac(n - 1))
+    }
+}
+
+int main <- function() {
+    print(fac(3))
+}
