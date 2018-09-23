@@ -9,4 +9,9 @@ int main <- function(){
     }
     print(a)
     print(b)
+
+    while(b < 5.52) {
+        print(b)
+        b = b + 1
+    }
 }

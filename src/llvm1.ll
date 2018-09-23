@@ -32,5 +32,21 @@ ifcont:                                           ; preds = %else, %then
   %printfCall = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i32 %2)
   %3 = load i32, i32* %b
   %printfCall1 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i32 %3)
+  br label %loop
+
+loop:                                             ; preds = %loop, %ifcont
+  %4 = load i32, i32* %b
+  %printfCall2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i32 %4)
+  %5 = load i32, i32* %b
+  %addtmp = add i32 %5, 1
+  store i32 %addtmp, i32* %b
+  %6 = load i32, i32* %b
+  %7 = sitofp i32 %6 to double
+  %lttmp = fcmp ult double %7, 0x4016147AE0000000
+  %8 = sitofp i1 %lttmp to double
+  %loopcond = fcmp one double %8, 0.000000e+00
+  br i1 %loopcond, label %loop, label %afterloop
+
+afterloop:                                        ; preds = %loop
   ret i32 0
 }

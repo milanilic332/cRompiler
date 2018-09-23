@@ -39,7 +39,7 @@ Value* Str1;
 }
 
 %token token_int token_double token_id token_assign token_return token_function
-%token token_for token_in token_if token_else token_print token_main token_array
+%token token_for token_in token_if token_else token_print token_main token_array token_while
 %token token_eq token_leq token_geq token_not token_neq
 %token token_or token_and
 %token token_int_name token_double_name
@@ -81,6 +81,11 @@ STATEMENT
 		$$ = new AssignmentNode(*$1, $3);
 		delete $1;
 	}
+	| token_id token_assign token_array '(' LIST_ARGS ')' {
+		$$ = new ArrayAssignmentNode(*$1, *$5);
+		delete $1;
+		delete $5;
+	}
     | token_id '[' EXPRESSION ']' token_assign EXPRESSION {
 
 	}
@@ -120,6 +125,9 @@ STATEMENT
 		$$ = new ForLoopNode(*$3, $5, $7, new BlockNode(*$10));
 		delete $3;
 		delete $10;
+	}
+	| token_while '(' EXPRESSION ')' '{' STATEMENTSP '}' {
+		$$ = new WhileNode($3, new BlockNode(*$6));
 	}
 	| token_return '(' EXPRESSIONP ')' {
 		$$ = new ReturnNode($3);
@@ -273,10 +281,6 @@ EXPRESSION
 	}
     | token_double {
 		$$ = new DoubleNode($1);
-	}
-	| token_array '(' LIST_ARGS ')' {
-		$$ = new ArrayNode(*$3);
-		delete $3;
 	}
     ;
 

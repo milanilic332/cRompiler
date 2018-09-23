@@ -95,6 +95,18 @@ private:
 };
 
 
+class ArrayAssignmentNode: public ExpressionNode {
+public:
+    ArrayAssignmentNode(string id, vector<ExpressionNode*> ve)
+        : id_(id), ve_(ve)
+    {}
+	Value* codegen() const;
+private:
+	string id_;
+    vector<ExpressionNode*> ve_;
+};
+
+
 class BinaryOperatorNode: public ExpressionNode {
 public:
     BinaryOperatorNode(bin_op op, ExpressionNode* l, ExpressionNode* r)
@@ -105,17 +117,6 @@ private:
     bin_op op_;
     ExpressionNode* l_;
     ExpressionNode* r_;
-};
-
-
-class ArrayNode: public ExpressionNode {
-public:
-	ArrayNode(vector<ExpressionNode*> e)
-		: e_(e)
-	{}
-	Value* codegen() const;
-private:
-	vector<ExpressionNode*> e_;
 };
 
 
@@ -202,6 +203,20 @@ private:
 };
 
 
+class WhileNode: public ExpressionNode {
+public:
+	WhileNode(ExpressionNode* cond, ExpressionNode* body)
+		: cond_(cond), body_(body)
+	{}
+	// ~ForLoopNode();
+	Value* codegen() const;
+private:
+	string id_;
+	ExpressionNode *cond_;
+    ExpressionNode *body_;
+};
+
+
 class FunctionPrototypeNode {
 public:
     FunctionPrototypeNode(string id, vector<pair<my_type, string>> params)
@@ -232,3 +247,4 @@ private:
 void InitializeModuleAndPassManager();
 AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarName);
 AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName);
+AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName);

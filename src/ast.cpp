@@ -32,6 +32,7 @@ Value* DoubleNode::codegen() const {
     return ConstantFP::get(TheContext, APFloat(num_));
 }
 
+
 Value* AssignmentNode::codegen() const {
     cerr << "Entered AssignmentNode" << endl;
     Value *Val = e_->codegen();
@@ -40,7 +41,7 @@ Value* AssignmentNode::codegen() const {
         return nullptr;
     }
     Function *F = Builder.GetInsertBlock()->getParent();
-        if(NamedValues[F][id_] == nullptr){
+    if(NamedValues[F][id_] == nullptr){
         AllocaInst* Alloca = nullptr;
         if(Val->getType() == Type::getInt32Ty(TheContext))
             Alloca = CreateEntryBlockAllocaInt(F, id_);
@@ -59,6 +60,15 @@ Value* AssignmentNode::codegen() const {
         NamedValues[F][id_] = Alloca;
     }
     return Val;
+}
+
+Value* ArrayAssignmentNode::codegen() const {
+    cerr << "EnteredArrayAssignmentNode" << endl;
+    Function *F = Builder.GetInsertBlock()->getParent();
+    AllocaInst* Alloca = CreateEntryBlockAllocaIntArray(F, id_);
+
+
+    return ConstantInt::get(TheContext, APInt(32, 0));
 }
 
 Value* BinaryOperatorNode::codegen() const {
@@ -154,10 +164,6 @@ Value* BinaryOperatorNode::codegen() const {
     return nullptr;
 }
 
-Value* ArrayNode::codegen() const {
-    return nullptr;
-}
-
 Value* ReturnNode::codegen() const {
     cerr << "Entered ReturnNode" << endl;
     return e_->codegen();
@@ -224,8 +230,7 @@ Value* IfElseNode::codegen() const {
         cerr << "IfElseNode: nullptr" << endl;
         return nullptr;
     }
-    if(Cond->getType() == Type::getInt32Ty(TheContext))
-        Cond = Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext));
+
     Value* Tmp = Builder.CreateFCmpONE(Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext)), ConstantFP::get(TheContext, APFloat(0.0)), "ifcond");
 
     Function *F = Builder.GetInsertBlock()->getParent();
@@ -317,6 +322,35 @@ Value* ForLoopNode::codegen() const {
     return ConstantInt::get(TheContext, APInt(32, 0));
 }
 
+Value* WhileNode::codegen() const {
+    cerr << "Entered WhileNode" << endl;
+
+    Function *F = Builder.GetInsertBlock()->getParent();
+    BasicBlock *LoopBB = BasicBlock::Create(TheContext, "loop", F);
+    Builder.CreateBr(LoopBB);
+
+    Builder.SetInsertPoint(LoopBB);
+
+    Value* Body = body_->codegen();
+    if (!Body)
+        return NULL;
+
+    Value* Cond = cond_->codegen();
+    if (!Cond)
+        return NULL;
+
+    Value* Tmp = Builder.CreateFCmpONE(Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext)), ConstantFP::get(TheContext, APFloat(0.0)), "loopcond");
+
+    BasicBlock *AfterLoopBB = BasicBlock::Create(TheContext, "afterloop", F);
+    Builder.CreateCondBr(Tmp, LoopBB, AfterLoopBB);
+
+    Builder.SetInsertPoint(AfterLoopBB);
+
+    LoopBB = Builder.GetInsertBlock();
+
+    return ConstantInt::get(TheContext, APInt(32, 0));
+}
+
 Function* FunctionPrototypeNode::codegen() const {
     cerr << "Entered FunctionPrototypeNode" << endl;
     vector<Type*> d;
@@ -402,4 +436,11 @@ AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarNa
 AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName) {
     IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0, VarName.c_str());
+}
+
+AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName) {
+    Type* I = IntegerType::getInt32Ty(TheContext);
+    ArrayType* arrayType = ArrayType::get(I, 3);
+    IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(arrayType, 0, VarName.c_str());
 }
