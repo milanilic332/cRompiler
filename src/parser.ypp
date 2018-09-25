@@ -42,7 +42,7 @@ Value* Str1;
 %token token_for token_in token_if token_else token_print token_main token_array token_while
 %token token_eq token_leq token_geq token_not token_neq
 %token token_or token_and
-%token token_int_name token_double_name
+%token token_int_name token_double_name token_seq
 
 %type <i> token_int
 %type <d> token_double
@@ -86,11 +86,15 @@ STATEMENT
 		delete $1;
 		delete $5;
 	}
+	| token_id token_assign token_seq '(' EXPRESSION ',' EXPRESSION ',' EXPRESSION ')' {
+		$$ = new SequenceNode(*$1, $5, $7, $9);
+	}
     | token_id '[' EXPRESSION ']' token_assign EXPRESSION {
-
+		$$ = new ModifyArrayNode(*$1, $3, $6);
+		delete $1;
 	}
     | INTORDOUBLE token_id token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
-		FunctionNode f(FunctionPrototypeNode(*$2, *$6), new BlockNode(*$9));
+		FunctionNode f(FunctionPrototypeNode(*$2, *$6, $1), new BlockNode(*$9));
 		delete $2;
 		delete $6;
 		delete $9;
@@ -269,7 +273,8 @@ EXPRESSION
 		delete $1;
 	}
     | token_id '[' EXPRESSION ']' {
-
+		$$ = new AccessArrayNode(*$1, $3);
+		delete $1;
 	}
     | token_id '(' LIST_ARGS ')' {
 		$$ = new FunctionCallNode(*$1, *$3);

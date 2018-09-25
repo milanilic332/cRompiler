@@ -17,6 +17,7 @@ void yyerror(const std::string &msg);
 %%
 
 "main"                  { return token_main; }
+"seq"                   { return token_seq; }
 "while"                 { return token_while; }
 "array"                 { return token_array; }
 "int"                   { return token_int_name; }

@@ -54,6 +54,8 @@ Value* AssignmentNode::codegen() const {
     }
     else {
         AllocaInst* Alloca = NamedValues[F][id_];
+        if(Alloca->getAllocatedType() == Type::getInt32Ty(TheContext) and Val->getType() !=  Type::getInt32Ty(TheContext))
+            Alloca = CreateEntryBlockAllocaDouble(F, id_);
 
         Builder.CreateStore(Val, Alloca);
 
@@ -63,11 +65,88 @@ Value* AssignmentNode::codegen() const {
 }
 
 Value* ArrayAssignmentNode::codegen() const {
-    cerr << "EnteredArrayAssignmentNode" << endl;
+    cerr << "Entered ArrayAssignmentNode" << endl;
     Function *F = Builder.GetInsertBlock()->getParent();
-    AllocaInst* Alloca = CreateEntryBlockAllocaIntArray(F, id_);
+    bool is_int = true;
+    for(auto &el: ve_){
+        if(el->codegen()->getType() != Type::getInt32Ty(TheContext)) {
+            is_int = false;
+            break;
+        }
+    }
 
+    AllocaInst* Alloca = nullptr;
+    if(is_int)
+        Alloca = CreateEntryBlockAllocaIntArray(F, id_, ve_.size());
+    else
+        Alloca = CreateEntryBlockAllocaDoubleArray(F, id_, ve_.size());
 
+    for(unsigned i = 0; i < ve_.size(); i++){
+        vector<Value*> s;
+        s.push_back(ConstantInt::get(TheContext, APInt(32, 0)));
+        s.push_back(ConstantInt::get(TheContext, APInt(32, i)));
+
+        Value* ptr = Builder.CreateGEP(Alloca, s);
+
+        Value* val = ve_[i]->codegen();
+
+        if(!is_int and val->getType() == Type::getInt32Ty(TheContext))
+            val = Builder.CreateSIToFP(val, Type::getDoubleTy(TheContext));
+        Value* store = Builder.CreateStore(val, ptr);
+    }
+
+    NamedValues[F][id_] = Alloca;
+
+    return ConstantInt::get(TheContext, APInt(32, 0));
+}
+
+Value* AccessArrayNode::codegen() const {
+    cerr << "Entered AccessArrayNode" << endl;
+    Function *F = Builder.GetInsertBlock()->getParent();
+
+    Value* index = e_->codegen();
+    if(!index)
+        return nullptr;
+
+    AllocaInst* Alloca = NamedValues[F][id_];
+
+    vector<Value*> s;
+    s.push_back(ConstantInt::get(TheContext, APInt(32, 0)));
+    s.push_back(index);
+
+    Value* ptr = Builder.CreateGEP(Alloca, s);
+
+    return Builder.CreateLoad(ptr);
+}
+
+Value* ModifyArrayNode::codegen() const {
+    cerr << "Entered AccessArrayNode" << endl;
+    Function *F = Builder.GetInsertBlock()->getParent();
+
+    Value* index = e1_->codegen();
+    if(!index)
+        return nullptr;
+
+    AllocaInst* Alloca = NamedValues[F][id_];
+
+    vector<Value*> s;
+    s.push_back(ConstantInt::get(TheContext, APInt(32, 0)));
+    s.push_back(index);
+
+    Value* ptr = Builder.CreateGEP(Alloca, s);
+
+    Value* nval = e2_->codegen();
+
+    Value* oval = Builder.CreateLoad(ptr);
+
+    if(nval->getType() == Type::getInt32Ty(TheContext) and oval->getType() == Type::getDoubleTy(TheContext))
+        nval = Builder.CreateSIToFP(nval, Type::getDoubleTy(TheContext));
+    Value* store = Builder.CreateStore(nval, ptr);
+
+    return nval;
+}
+
+Value* SequenceNode::codegen() const {
     return ConstantInt::get(TheContext, APInt(32, 0));
 }
 
@@ -166,7 +245,14 @@ Value* BinaryOperatorNode::codegen() const {
 
 Value* ReturnNode::codegen() const {
     cerr << "Entered ReturnNode" << endl;
-    return e_->codegen();
+    Function *F = Builder.GetInsertBlock()->getParent();
+    Type* FT = F->getReturnType();
+    Value* val = e_->codegen();
+    if(val->getType() == Type::getInt32Ty(TheContext) and FT == Type::getDoubleTy(TheContext))
+        val = Builder.CreateSIToFP(val, Type::getDoubleTy(TheContext));
+    else if(val->getType() == Type::getDoubleTy(TheContext) and FT == Type::getInt32Ty(TheContext))
+        val = Builder.CreateFPToSI(val, Type::getInt32Ty(TheContext));
+    return val;
 }
 
 Value* BlockNode::codegen() const {
@@ -360,7 +446,11 @@ Function* FunctionPrototypeNode::codegen() const {
         else
             d.push_back(Type::getDoubleTy(TheContext));
     }
-    FunctionType* FT = FunctionType::get(Type::getInt32Ty(TheContext), d, false);
+    FunctionType *FT = nullptr;
+    if(m_ == my_type::int_)
+        FT = FunctionType::get(Type::getInt32Ty(TheContext), d, false);
+    else
+        FT = FunctionType::get(Type::getDoubleTy(TheContext), d, false);
     Function *F = Function::Create(FT, Function::ExternalLinkage, id_, TheModule);
 
     unsigned i = 0;
@@ -438,9 +528,16 @@ AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &Va
     return TmpB.CreateAlloca(Type::getDoubleTy(TheContext), 0, VarName.c_str());
 }
 
-AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName) {
+AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName, unsigned size) {
     Type* I = IntegerType::getInt32Ty(TheContext);
-    ArrayType* arrayType = ArrayType::get(I, 3);
+    ArrayType* arrayType = ArrayType::get(I, size);
+    IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(arrayType, 0, VarName.c_str());
+}
+
+AllocaInst *CreateEntryBlockAllocaDoubleArray(Function *TheFunction, const string &VarName, unsigned size) {
+    Type* I = Type::getDoubleTy(TheContext);
+    ArrayType* arrayType = ArrayType::get(I, size);
     IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     return TmpB.CreateAlloca(arrayType, 0, VarName.c_str());
 }

@@ -107,6 +107,45 @@ private:
 };
 
 
+class AccessArrayNode: public ExpressionNode {
+public:
+    AccessArrayNode(string id, ExpressionNode* e)
+        : id_(id), e_(e)
+    {}
+	Value* codegen() const;
+private:
+	string id_;
+    ExpressionNode* e_;
+};
+
+
+class ModifyArrayNode: public ExpressionNode {
+public:
+    ModifyArrayNode(string id, ExpressionNode* e1, ExpressionNode* e2)
+        : id_(id), e1_(e1), e2_(e2)
+    {}
+	Value* codegen() const;
+private:
+	string id_;
+	ExpressionNode* e1_;
+	ExpressionNode* e2_;
+};
+
+
+class SequenceNode: public ExpressionNode {
+public:
+    SequenceNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
+        : id_(id), start_(e1), end_(e2), step_(e3)
+    {}
+	Value* codegen() const;
+private:
+	string id_;
+    ExpressionNode* start_;
+	ExpressionNode* end_;
+	ExpressionNode* step_;
+};
+
+
 class BinaryOperatorNode: public ExpressionNode {
 public:
     BinaryOperatorNode(bin_op op, ExpressionNode* l, ExpressionNode* r)
@@ -219,8 +258,8 @@ private:
 
 class FunctionPrototypeNode {
 public:
-    FunctionPrototypeNode(string id, vector<pair<my_type, string>> params)
-        : id_(id), params_(params)
+    FunctionPrototypeNode(string id, vector<pair<my_type, string>> params, my_type m)
+        : id_(id), params_(params), m_(m)
     {}
 	Function* codegen() const;
 	string getName() const {
@@ -229,6 +268,7 @@ public:
 private:
     string id_;
     vector<pair<my_type, string>> params_;
+	my_type m_;
 };
 
 
@@ -247,4 +287,5 @@ private:
 void InitializeModuleAndPassManager();
 AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarName);
 AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName);
-AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName);
+AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName, unsigned size);
+AllocaInst *CreateEntryBlockAllocaDoubleArray(Function *TheFunction, const string &VarName, unsigned size);
