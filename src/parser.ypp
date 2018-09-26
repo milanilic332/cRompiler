@@ -81,13 +81,14 @@ STATEMENT
 		$$ = new AssignmentNode(*$1, $3);
 		delete $1;
 	}
+	| token_id token_assign token_seq '(' EXPRESSION ',' EXPRESSION  ',' EXPRESSION ')'{
+		$$ = new SequenceNode(*$1, $5, $7, $9);
+		delete $1;
+	}
 	| token_id token_assign token_array '(' LIST_ARGS ')' {
 		$$ = new ArrayAssignmentNode(*$1, *$5);
 		delete $1;
 		delete $5;
-	}
-	| token_id token_assign token_seq '(' EXPRESSION ',' EXPRESSION ',' EXPRESSION ')' {
-		$$ = new SequenceNode(*$1, $5, $7, $9);
 	}
     | token_id '[' EXPRESSION ']' token_assign EXPRESSION {
 		$$ = new ModifyArrayNode(*$1, $3, $6);
@@ -109,7 +110,7 @@ STATEMENT
 	    Builder.SetInsertPoint(BB);
 
 		Str = Builder.CreateGlobalStringPtr("%d\n");
-		Str1 =  Builder.CreateGlobalStringPtr("%lf\n");
+		Str1 =  Builder.CreateGlobalStringPtr("%.2lf\n");
 		$$ = new BlockNode(*$9);
 		$$->codegen();
 		delete $9;
@@ -297,8 +298,6 @@ int main() {
 
 	FunctionType *FT1 = FunctionType::get(IntegerType::getInt32Ty(TheContext), PointerType::get(Type::getInt8Ty(TheContext), 0), true);
 	PrintfFja = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
-
-	//Str = Builder.CreateGlobalStringPtr("%d\n");
 
 	yyparse();
 

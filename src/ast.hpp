@@ -132,20 +132,6 @@ private:
 };
 
 
-class SequenceNode: public ExpressionNode {
-public:
-    SequenceNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
-        : id_(id), start_(e1), end_(e2), step_(e3)
-    {}
-	Value* codegen() const;
-private:
-	string id_;
-    ExpressionNode* start_;
-	ExpressionNode* end_;
-	ExpressionNode* step_;
-};
-
-
 class BinaryOperatorNode: public ExpressionNode {
 public:
     BinaryOperatorNode(bin_op op, ExpressionNode* l, ExpressionNode* r)
@@ -210,6 +196,20 @@ public:
 private:
 	string id_;
 	vector<ExpressionNode*> params_;
+};
+
+
+class SequenceNode: public ExpressionNode {
+public:
+	SequenceNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
+		: id_(id), start_(e1), end_(e2), step_(e3)
+	{}
+	Value* codegen() const;
+private:
+	string id_;
+	ExpressionNode* start_;
+	ExpressionNode* end_;
+	ExpressionNode* step_;
 };
 
 
@@ -289,3 +289,4 @@ AllocaInst *CreateEntryBlockAllocaInt(Function *TheFunction, const string &VarNa
 AllocaInst *CreateEntryBlockAllocaDouble(Function *TheFunction, const string &VarName);
 AllocaInst *CreateEntryBlockAllocaIntArray(Function *TheFunction, const string &VarName, unsigned size);
 AllocaInst *CreateEntryBlockAllocaDoubleArray(Function *TheFunction, const string &VarName, unsigned size);
+AllocaInst *CreateEntryBlockAllocaDoubleVector(Function * TheFunction, const string &VarName);

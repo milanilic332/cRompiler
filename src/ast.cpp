@@ -147,7 +147,83 @@ Value* ModifyArrayNode::codegen() const {
 }
 
 Value* SequenceNode::codegen() const {
-    return ConstantInt::get(TheContext, APInt(32, 0));
+    cerr << "Entered SequenceNode" << endl;
+    Function *F = Builder.GetInsertBlock()->getParent();
+
+    Value* start = start_->codegen();
+    if(!start)
+        return nullptr;
+
+    if(start->getType() == Type::getInt32Ty(TheContext))
+        start = Builder.CreateSIToFP(start, Type::getDoubleTy(TheContext));
+
+    Value* end = end_->codegen();
+    if(!end)
+        return nullptr;
+
+    if(end->getType() == Type::getInt32Ty(TheContext))
+        end = Builder.CreateSIToFP(end, Type::getDoubleTy(TheContext));
+
+    Value* step = step_->codegen();
+    if(!step)
+        return nullptr;
+
+    if(step->getType() == Type::getInt32Ty(TheContext))
+        step = Builder.CreateSIToFP(step, Type::getDoubleTy(TheContext));
+
+    Value* idx = ConstantInt::get(TheContext, APInt(32, 0));
+
+    AllocaInst* Alloca = CreateEntryBlockAllocaDoubleVector(F, id_);
+    AllocaInst* AllocaIdx = CreateEntryBlockAllocaInt(F, "idx");
+    AllocaInst* AllocaStart = CreateEntryBlockAllocaDouble(F, "start");
+    AllocaInst* AllocaEnd = CreateEntryBlockAllocaDouble(F, "end");
+    AllocaInst* AllocaStep = CreateEntryBlockAllocaDouble(F, "step");
+
+    Builder.CreateStore(idx, AllocaIdx);
+    Builder.CreateStore(start, AllocaStart);
+    Builder.CreateStore(end, AllocaEnd);
+    Builder.CreateStore(step, AllocaStep);
+
+    BasicBlock *LoopBB = BasicBlock::Create(TheContext, "loop", F);
+
+    Builder.CreateBr(LoopBB);
+
+    Builder.SetInsertPoint(LoopBB);
+
+    start = Builder.CreateLoad(AllocaStart);
+    end = Builder.CreateLoad(AllocaEnd);
+    step = Builder.CreateLoad(AllocaStep);
+    idx = Builder.CreateLoad(AllocaIdx);
+
+    vector<Value*> s;
+    s.push_back(ConstantInt::get(TheContext, APInt(32, 0)));
+    s.push_back(idx);
+
+    Value* ptr = Builder.CreateGEP(Alloca, s);
+
+    Builder.CreateStore(start, ptr);
+
+    start = Builder.CreateFAdd(start, step, "addtmp");
+
+    idx = Builder.CreateAdd(idx, ConstantInt::get(TheContext, APInt(32, 1)), "addtmp");
+
+    Builder.CreateStore(idx, AllocaIdx);
+    Builder.CreateStore(start, AllocaStart);
+
+    Value* Cond = Builder.CreateFCmpULE(start, end, "leqtmp");
+    Cond = Builder.CreateSIToFP(Cond, Type::getDoubleTy(TheContext));
+    Value* Tmp = Builder.CreateFCmpONE(Cond, ConstantFP::get(TheContext, APFloat(0.0)), "loopcond");
+
+    BasicBlock *AfterLoopBB = BasicBlock::Create(TheContext, "afterloop", F);
+    Builder.CreateCondBr(Tmp, LoopBB, AfterLoopBB);
+
+    Builder.SetInsertPoint(AfterLoopBB);
+
+    LoopBB = Builder.GetInsertBlock();
+
+    NamedValues[F][id_] = Alloca;
+
+    return ConstantFP::get(TheContext, APFloat(0.0));
 }
 
 Value* BinaryOperatorNode::codegen() const {
@@ -178,9 +254,8 @@ Value* BinaryOperatorNode::codegen() const {
                 return Builder.CreateMul(l, d, "multmp");
             }
             case bin_op::di: {
-                l = Builder.CreateSIToFP(l, Type::getDoubleTy(TheContext));
-                d = Builder.CreateSIToFP(d, Type::getDoubleTy(TheContext));
-                return Builder.CreateFDiv(l, d, "divtmp");
+
+                return Builder.CreateSDiv(l, d, "divtmp");
             }
             case bin_op::gt: {
                 return Builder.CreateICmpSGT(l, d, "gttmp");
@@ -309,6 +384,7 @@ Value* FunctionCallNode::codegen() const {
     return Builder.CreateCall(F, a, "calltmp");
 }
 
+
 Value* IfElseNode::codegen() const {
     cerr << "Entered IfElseNode" << endl;
     Value *Cond = cond_->codegen();
@@ -387,7 +463,11 @@ Value* ForLoopNode::codegen() const {
     Value* NextVar = Builder.CreateAdd(CurrVal, IncVal, "nextvar");
     Builder.CreateStore(NextVar, Alloca);
 
-    Value* Cond = Builder.CreateICmpSLT(CurrVal, end_->codegen(), "leqtmp");
+    Value* end = end_->codegen();
+    if(end->getType() == Type::getDoubleTy(TheContext))
+        end = Builder.CreateFPToSI(end, Type::getInt32Ty(TheContext));
+
+    Value* Cond = Builder.CreateICmpSLT(CurrVal, end, "leqtmp");
     if (!Cond){
         cerr << "ForLoopNode: nullptr" << endl;
         return nullptr;
@@ -480,7 +560,7 @@ Function* FunctionNode::codegen() const {
     Builder.SetInsertPoint(BB);
 
     Str = Builder.CreateGlobalStringPtr("%d\n");
-    Str1 = Builder.CreateGlobalStringPtr("%lf\n");
+    Str1 = Builder.CreateGlobalStringPtr("%.2lf\n");
 
     NamedValues[F].clear();
     for(auto &Arg : F->args()) {
@@ -540,4 +620,11 @@ AllocaInst *CreateEntryBlockAllocaDoubleArray(Function *TheFunction, const strin
     ArrayType* arrayType = ArrayType::get(I, size);
     IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
     return TmpB.CreateAlloca(arrayType, 0, VarName.c_str());
+}
+
+AllocaInst *CreateEntryBlockAllocaDoubleVector(Function * TheFunction, const string &VarName) {
+    Type* I = Type::getDoubleTy(TheContext);
+    VectorType* vectorType = VectorType::get(I, 128);
+    IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
+    return TmpB.CreateAlloca(vectorType, 0, VarName.c_str());
 }
