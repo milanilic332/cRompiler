@@ -2,7 +2,7 @@
 source_filename = "Module"
 
 @0 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
-@1 = private unnamed_addr constant [5 x i8] c"%lf\0A\00"
+@1 = private unnamed_addr constant [7 x i8] c"%.2lf\0A\00"
 @2 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 @3 = private unnamed_addr constant [5 x i8] c"%lf\0A\00"
 
@@ -15,7 +15,7 @@ entry:
   store double %a, double* %a1
   store i32 %b, i32* %b2
   %0 = load double, double* %a1
-  %printfCall = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @1, i32 0, i32 0), double %0)
+  %printfCall = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([7 x i8], [7 x i8]* @1, i32 0, i32 0), double %0)
   %1 = load i32, i32* %b2
   %printfCall3 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @0, i32 0, i32 0), i32 %1)
   ret i32 %1

@@ -10,10 +10,9 @@ using namespace std;
 
 #include "parser.tab.hpp"
 
-void yyerror(const std::string &msg);
+void yyerror(const string &msg);
 
 %}
-
 %%
 
 "main"                  { return token_main; }
@@ -42,6 +41,6 @@ void yyerror(const std::string &msg);
 [:{}()\[\],/<>+*-]      { return *yytext; }
 [ \t\n]                 { }
 [#].*                   { }
-.                       { cout << "Error" << endl; exit(1); }
+.                       { yyerror("Lexer error"); exit(1); }
 
 %%

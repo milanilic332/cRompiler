@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
-using namespace std;
 
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Constants.h"
@@ -18,6 +17,7 @@ using namespace std;
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 
+using namespace std;
 using namespace llvm;
 using namespace llvm::legacy;
 
@@ -88,6 +88,9 @@ public:
     AssignmentNode(string id, ExpressionNode* e)
         : id_(id), e_(e)
     {}
+	~AssignmentNode() {
+		delete e_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -100,6 +103,10 @@ public:
     ArrayAssignmentNode(string id, vector<ExpressionNode*> ve)
         : id_(id), ve_(ve)
     {}
+	~ArrayAssignmentNode() {
+		for(auto &e: ve_)
+			delete e;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -112,6 +119,9 @@ public:
     AccessArrayNode(string id, ExpressionNode* e)
         : id_(id), e_(e)
     {}
+	~AccessArrayNode() {
+		delete e_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -124,6 +134,10 @@ public:
     ModifyArrayNode(string id, ExpressionNode* e1, ExpressionNode* e2)
         : id_(id), e1_(e1), e2_(e2)
     {}
+	~ModifyArrayNode() {
+		delete e1_;
+		delete e2_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -137,6 +151,10 @@ public:
     BinaryOperatorNode(bin_op op, ExpressionNode* l, ExpressionNode* r)
         : op_(op), l_(l), r_(r)
     {}
+	~BinaryOperatorNode() {
+		delete l_;
+		delete r_;
+	}
 	Value* codegen() const;
 private:
     bin_op op_;
@@ -150,6 +168,9 @@ public:
 	ReturnNode(ExpressionNode* e)
 		: e_(e)
 	{}
+	~ReturnNode() {
+		delete e_;
+	}
 	Value* codegen() const;
 private:
 	ExpressionNode* e_;
@@ -158,10 +179,13 @@ private:
 
 class BlockNode: public ExpressionNode {
 public:
-	BlockNode(vector<ExpressionNode*> statements)
-		: statements_(statements)
+	BlockNode(vector<ExpressionNode*> ve)
+		: statements_(ve)
 	{}
-	// ~BlockNode();
+	~BlockNode() {
+		for(auto &e: statements_)
+			delete e;
+	}
 	Value* codegen() const;
 private:
 	vector<ExpressionNode*> statements_;
@@ -173,6 +197,9 @@ public:
 	PrintNode(ExpressionNode* e)
 		: e_(e)
 	{}
+	~PrintNode() {
+		delete e_;
+	}
 	Value* codegen() const;
 private:
 	ExpressionNode *e_;
@@ -188,10 +215,13 @@ public:
 
 class FunctionCallNode: public ExpressionNode {
 public:
-	FunctionCallNode(string id, vector<ExpressionNode*> params)
-		: id_(id), params_(params)
+	FunctionCallNode(string id, vector<ExpressionNode*> ve)
+		: id_(id), params_(ve)
 	{}
-	// ~FunctionCallNode();
+	~FunctionCallNode() {
+		for(auto &e: params_)
+			delete e;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -204,6 +234,11 @@ public:
 	SequenceNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
 		: id_(id), start_(e1), end_(e2), step_(e3)
 	{}
+	~SequenceNode() {
+		delete start_;
+		delete end_;
+		delete step_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -215,10 +250,14 @@ private:
 
 class IfElseNode: public ExpressionNode {
 public:
-   IfElseNode(ExpressionNode* cond, ExpressionNode* then, ExpressionNode* els)
-       : cond_(cond), then_(then), else_(els)
+   IfElseNode(ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
+       : cond_(e1), then_(e2), else_(e3)
    {}
-   // ~IfElseNode();
+   ~IfElseNode() {
+	   delete cond_;
+	   delete then_;
+	   delete else_;
+   }
    Value* codegen() const;
 private:
    ExpressionNode *cond_;
@@ -229,10 +268,14 @@ private:
 
 class ForLoopNode: public ExpressionNode {
 public:
-	ForLoopNode(string id, ExpressionNode* start, ExpressionNode* end, ExpressionNode* body)
-		: id_(id), start_(start), end_(end), body_(body)
+	ForLoopNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
+		: id_(id), start_(e1), end_(e2), body_(e3)
 	{}
-	// ~ForLoopNode();
+	~ForLoopNode() {
+		delete start_;
+		delete end_;
+		delete body_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -244,10 +287,13 @@ private:
 
 class WhileNode: public ExpressionNode {
 public:
-	WhileNode(ExpressionNode* cond, ExpressionNode* body)
-		: cond_(cond), body_(body)
+	WhileNode(ExpressionNode* e1, ExpressionNode* e2)
+		: cond_(e1), body_(e2)
 	{}
-	// ~ForLoopNode();
+	~WhileNode() {
+		delete cond_;
+		delete body_;
+	}
 	Value* codegen() const;
 private:
 	string id_;
@@ -258,26 +304,28 @@ private:
 
 class FunctionPrototypeNode {
 public:
-    FunctionPrototypeNode(string id, vector<pair<my_type, string>> params, my_type m)
-        : id_(id), params_(params), m_(m)
+    FunctionPrototypeNode(string id, vector<pair<my_type, string>> ve, my_type m)
+        : id_(id), params_(ve), ret_type_(m)
     {}
 	Function* codegen() const;
 	string getName() const {
-    return id_;
+    	return id_;
   	}
 private:
     string id_;
     vector<pair<my_type, string>> params_;
-	my_type m_;
+	my_type ret_type_;
 };
 
 
 class FunctionNode {
 public:
-	FunctionNode(FunctionPrototypeNode prototype, ExpressionNode* body)
-		: prototype_(prototype), body_(body)
+	FunctionNode(FunctionPrototypeNode p, ExpressionNode* e)
+		: prototype_(p), body_(e)
 	{}
-	// ~FunctionNode();
+	~FunctionNode() {
+		delete body_;
+	}
 	Function* codegen() const;
 private:
 	FunctionPrototypeNode prototype_;

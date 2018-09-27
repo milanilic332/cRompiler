@@ -18,11 +18,10 @@ void yyerror(const std::string &msg) {
 extern llvm::Module* TheModule;
 extern llvm::LLVMContext TheContext;
 extern IRBuilder<> Builder;
-extern vector<FunctionNode*> DefinedFunctions;
-Function *MainFja;
-Function *PrintfFja;
-Value* Str;
-Value* Str1;
+Function *Main;
+Function *Printf;
+Value* StringInt;
+Value* StringDouble;
 
 
 %}
@@ -105,18 +104,18 @@ STATEMENT
 	| token_int_name token_main token_assign token_function '(' LIST_PARAMS ')' '{' STATEMENTSP '}' {
 		vector<Type*> v(0);
 	    FunctionType* FT2 = FunctionType::get(Type::getInt32Ty(TheContext), v, false);
-	    MainFja = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
-	    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", MainFja);
+	    Main = Function::Create(FT2, Function::ExternalLinkage, "main", TheModule);
+	    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", Main);
 	    Builder.SetInsertPoint(BB);
 
-		Str = Builder.CreateGlobalStringPtr("%d\n");
-		Str1 =  Builder.CreateGlobalStringPtr("%.2lf\n");
+		StringInt = Builder.CreateGlobalStringPtr("%d\n");
+		StringDouble =  Builder.CreateGlobalStringPtr("%lf\n");
 		$$ = new BlockNode(*$9);
 		$$->codegen();
 		delete $9;
 
 		Builder.CreateRet(ConstantInt::get(TheContext, APInt(32, 0)));
-	    verifyFunction(*MainFja);
+	    verifyFunction(*Main);
 	}
     | token_if '(' EXPRESSION ')' '{' STATEMENTSP '}' {
 		$$ = new IfElseNode($3, new BlockNode(*$6), new EmptyNode());
@@ -188,24 +187,6 @@ INTORDOUBLE
 	}
 	;
 
-/* LIST_DEC_ARGS_OR_ARGS
-    : LIST_ARGS {
-		$$ = $1;
-	}
-    | LIST_DEC_ARGS {
-
-	}
-    ; */
-
-/* LIST_DEC_ARGS
-    : LIST_DEC_ARGS ',' token_id token_assign EXPRESSION {
-
-	}
-    | token_id token_assign EXPRESSION {
-
-	}
-    ; */
-
 LIST_ARGS
     : LIST_ARGSP {
 		$$ = $1;
@@ -263,9 +244,6 @@ EXPRESSION
 	| EXPRESSION token_and EXPRESSION {
 		$$ = new BinaryOperatorNode(bin_op::and_, $1, $3);
 	}
-    | token_not EXPRESSION {
-
-	}
     | '(' EXPRESSION ')' {
 		$$ = $2;
 	}
@@ -297,7 +275,7 @@ int main() {
 	InitializeModuleAndPassManager();
 
 	FunctionType *FT1 = FunctionType::get(IntegerType::getInt32Ty(TheContext), PointerType::get(Type::getInt8Ty(TheContext), 0), true);
-	PrintfFja = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
+	Printf = Function::Create(FT1, Function::ExternalLinkage, "printf", TheModule);
 
 	yyparse();
 

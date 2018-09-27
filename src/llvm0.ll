@@ -2,9 +2,9 @@
 source_filename = "Module"
 
 @0 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
-@1 = private unnamed_addr constant [5 x i8] c"%lf\0A\00"
+@1 = private unnamed_addr constant [7 x i8] c"%.2lf\0A\00"
 @2 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
-@3 = private unnamed_addr constant [5 x i8] c"%lf\0A\00"
+@3 = private unnamed_addr constant [7 x i8] c"%.2lf\0A\00"
 @4 = private unnamed_addr constant [4 x i8] c"%d\0A\00"
 @5 = private unnamed_addr constant [5 x i8] c"%lf\0A\00"
 
