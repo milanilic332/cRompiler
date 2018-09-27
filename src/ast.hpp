@@ -21,7 +21,7 @@ using namespace std;
 using namespace llvm;
 using namespace llvm::legacy;
 
-
+/* Binary operators */
 enum class bin_op {
 	plus,
 	minus,
@@ -37,20 +37,20 @@ enum class bin_op {
 	and_
 };
 
-
+/* Types */
 enum class my_type {
 	int_,
 	double_
 };
 
-
+/* Node holding any expression */
 class ExpressionNode {
 public:
 	virtual ~ExpressionNode() {}
 	virtual Value* codegen() const = 0;
 };
 
-
+/* Node handling variables in expressions */
 class VariableNode: public ExpressionNode {
 public:
 	VariableNode(string id)
@@ -61,7 +61,7 @@ private:
 	string id_;
 };
 
-
+/* Node handling int literals in expressions */
 class IntNode: public ExpressionNode {
 public:
     IntNode(int num)
@@ -72,6 +72,7 @@ private:
 	int num_;
 };
 
+/* Node handling double literals in expressions */
 class DoubleNode: public ExpressionNode {
 public:
     DoubleNode(float num)
@@ -82,7 +83,7 @@ private:
  	double num_;
 };
 
-
+/* Node handling literal assignments */
 class AssignmentNode: public ExpressionNode {
 public:
     AssignmentNode(string id, ExpressionNode* e)
@@ -97,7 +98,7 @@ private:
     ExpressionNode* e_;
 };
 
-
+/* Node handling array assignments */
 class ArrayAssignmentNode: public ExpressionNode {
 public:
     ArrayAssignmentNode(string id, vector<ExpressionNode*> ve)
@@ -113,7 +114,7 @@ private:
     vector<ExpressionNode*> ve_;
 };
 
-
+/* Node handling array accessing */
 class AccessArrayNode: public ExpressionNode {
 public:
     AccessArrayNode(string id, ExpressionNode* e)
@@ -128,7 +129,7 @@ private:
     ExpressionNode* e_;
 };
 
-
+/* Node handling modification of its elements */
 class ModifyArrayNode: public ExpressionNode {
 public:
     ModifyArrayNode(string id, ExpressionNode* e1, ExpressionNode* e2)
@@ -145,7 +146,7 @@ private:
 	ExpressionNode* e2_;
 };
 
-
+/* Node handling binary operations in expressions */
 class BinaryOperatorNode: public ExpressionNode {
 public:
     BinaryOperatorNode(bin_op op, ExpressionNode* l, ExpressionNode* r)
@@ -162,7 +163,7 @@ private:
     ExpressionNode* r_;
 };
 
-
+/* Node handling return expressions */
 class ReturnNode: public ExpressionNode {
 public:
 	ReturnNode(ExpressionNode* e)
@@ -176,7 +177,7 @@ private:
 	ExpressionNode* e_;
 };
 
-
+/* Node handling multiple statements in a block */
 class BlockNode: public ExpressionNode {
 public:
 	BlockNode(vector<ExpressionNode*> ve)
@@ -191,7 +192,7 @@ private:
 	vector<ExpressionNode*> statements_;
 };
 
-
+/* Node handling print function */
 class PrintNode: public ExpressionNode {
 public:
 	PrintNode(ExpressionNode* e)
@@ -212,7 +213,7 @@ public:
 	Value* codegen() const;
 };
 
-
+/* Node handling function calls */
 class FunctionCallNode: public ExpressionNode {
 public:
 	FunctionCallNode(string id, vector<ExpressionNode*> ve)
@@ -228,7 +229,7 @@ private:
 	vector<ExpressionNode*> params_;
 };
 
-
+/* Node handling call to seq function */
 class SequenceNode: public ExpressionNode {
 public:
 	SequenceNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
@@ -247,7 +248,7 @@ private:
 	ExpressionNode* step_;
 };
 
-
+/* Node handling if-else blocks */
 class IfElseNode: public ExpressionNode {
 public:
    IfElseNode(ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
@@ -265,7 +266,7 @@ private:
    ExpressionNode *else_;
 };
 
-
+/* Node handling for loops */
 class ForLoopNode: public ExpressionNode {
 public:
 	ForLoopNode(string id, ExpressionNode* e1, ExpressionNode* e2, ExpressionNode* e3)
@@ -284,7 +285,7 @@ private:
     ExpressionNode *body_;
 };
 
-
+/* Node handling while loops */
 class WhileNode: public ExpressionNode {
 public:
 	WhileNode(ExpressionNode* e1, ExpressionNode* e2)
@@ -301,7 +302,7 @@ private:
     ExpressionNode *body_;
 };
 
-
+/* Node handling function prototype */
 class FunctionPrototypeNode {
 public:
     FunctionPrototypeNode(string id, vector<pair<my_type, string>> ve, my_type m)
@@ -317,7 +318,7 @@ private:
 	my_type ret_type_;
 };
 
-
+/* Node handling definition of function */
 class FunctionNode {
 public:
 	FunctionNode(FunctionPrototypeNode p, ExpressionNode* e)
